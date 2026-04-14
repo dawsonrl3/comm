@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>How often do you...? 🎲</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap');
+  :root {
+    --bg:#f0f4ff;--surface:#ffffff;--surface2:#f7f9ff;--border:#e2e8f8;
+    --text:#1a2340;--text2:#5a6a8a;--blue:#3b6ef0;--blue-light:#e8effe;
+    --green:#22c97a;--green-light:#e6faf2;--amber:#f5a623;--amber-light:#fff7e6;
+    --red:#f04040;--red-light:#fff0f0;--purple:#7c4dff;--purple-light:#f0ebff;
+    --radius:14px;--radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:2rem}
+  .header{background:var(--blue);color:white;padding:1rem 1.25rem .85rem;display:flex;align-items:center;gap:.75rem;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(59,110,240,.25)}
+  .header h1{font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.2px;flex:1}
+  .header .room-badge{background:rgba(255,255,255,.2);border-radius:20px;padding:3px 12px;font-size:13px;font-weight:700;letter-spacing:2px;display:none}
+  .screen{display:none;padding:1rem 1rem 0}.screen.active{display:block}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:.875rem}
+  label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin-bottom:.4rem}
+  input[type=text]{width:100%;padding:11px 14px;font-size:16px;font-family:'Nunito Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);margin-bottom:1rem;outline:none;transition:border-color .15s}
+  input[type=text]:focus{border-color:var(--blue);background:#fff}
+  input[type=text]::placeholder{color:#a0aac0}
+  .btn{display:block;width:100%;padding:13px;font-size:15px;font-family:'Nunito',sans-serif;font-weight:700;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:transform .1s,opacity .15s;margin-bottom:.6rem}
+  .btn:active{transform:scale(.97)}.btn-primary{background:var(--blue);color:#fff}.btn-secondary{background:var(--surface2);color:var(--text);border:1.5px solid var(--border)}.btn-green{background:var(--green);color:#fff}.btn-sm{width:auto;display:inline-block;padding:8px 16px;font-size:13px}.btn:disabled{opacity:.45;pointer-events:none}
+  .room-code-display{font-family:'Nunito',sans-serif;font-size:36px;font-weight:800;letter-spacing:8px;text-align:center;color:var(--blue);background:var(--blue-light);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem}
+  .player-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:14px;font-weight:600}.player-item:last-child{border-bottom:none}
+  .token{width:22px;height:22px;border-radius:50%;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+  .you-badge{margin-left:auto;font-size:11px;font-weight:700;background:var(--blue-light);color:var(--blue);border-radius:10px;padding:2px 8px}
+  .hint{font-size:13px;color:var(--text2);text-align:center;margin:.5rem 0;line-height:1.5}
+  .turn-bar{border-radius:var(--radius-sm);padding:.7rem 1rem;font-size:14px;font-weight:700;margin-bottom:.75rem;text-align:center}
+  .turn-bar.mine{background:var(--green-light);color:#0e7a49}.turn-bar.other{background:var(--blue-light);color:#1a4bb5}
+  .question-card{background:var(--blue);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:.75rem;text-align:center}
+  .question-card .q-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.7);margin-bottom:.4rem}
+  .question-card .q-text{font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;color:#fff;line-height:1.3}
+  .question-card .q-sub{font-size:12px;color:rgba(255,255,255,.75);margin-top:.4rem}
+  .board-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:.75rem}
+  .board-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;min-width:320px}
+  .cell{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 3px 4px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10.5px;text-align:center;line-height:1.35;color:var(--text)}
+  .cell.q-cell{background:var(--surface2)}.cell.adverb{background:var(--purple-light);color:var(--purple);font-weight:700;font-style:italic;font-size:11px}
+  .cell.special-fwd{background:var(--green-light);color:#0e7a49;font-weight:700}.cell.special-back{background:var(--red-light);color:var(--red);font-weight:700}.cell.special-miss{background:var(--amber-light);color:#a06800;font-weight:700}
+  .cell.start-cell{background:var(--green-light);color:#0e7a49;font-weight:800;font-family:'Nunito',sans-serif}.cell.finish-cell{background:var(--amber-light);color:#8a5000;font-weight:800;font-family:'Nunito',sans-serif}
+  .cell.active-cell{outline:2.5px solid var(--blue);outline-offset:-1px}
+  .cell-tokens{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:3px}
+  .cell-token{width:11px;height:11px;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .die-section{display:flex;flex-direction:column;align-items:center;padding:.5rem 0 .25rem;margin-bottom:.5rem}
+  .die-face{font-size:72px;line-height:1;cursor:pointer;margin-bottom:.5rem;user-select:none}
+  .die-rolling{animation:dieRoll .5s ease-out}
+  @keyframes dieRoll{0%{transform:rotate(0) scale(1)}25%{transform:rotate(-20deg) scale(1.15)}75%{transform:rotate(15deg) scale(1.1)}100%{transform:rotate(0) scale(1)}}
+  .die-result{font-size:13px;color:var(--text2);min-height:18px;text-align:center;margin-bottom:.4rem}
+  .log-bar{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.6rem 1rem;font-size:12.5px;color:var(--text2);text-align:center;margin-bottom:.75rem;min-height:36px}
+  .game-players{margin-bottom:.75rem}
+  .game-player-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}.game-player-row:last-child{border-bottom:none}
+  .gp-name{flex:1;font-weight:600}.gp-pos{font-size:12px;color:var(--text2)}.gp-arrow{color:var(--blue);font-weight:700}
+  .progress-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+  .progress-bar-fill{height:100%;border-radius:3px;transition:width .4s}
+  .winner-screen-inner{text-align:center;padding:3rem 1.5rem 2rem}
+  .trophy{font-size:64px;margin-bottom:1rem;animation:trophyBounce .6s ease-out}
+  @keyframes trophyBounce{0%{transform:scale(0) rotate(-20deg);opacity:0}70%{transform:scale(1.15) rotate(5deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+  .winner-name{font-family:'Nunito',sans-serif;font-size:26px;font-weight:800;color:var(--blue);margin-bottom:.4rem}
+  .winner-sub{color:var(--text2);font-size:15px;margin-bottom:2rem}
+  .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);margin-bottom:.5rem}
+  .error-msg{color:var(--red);font-size:13px;text-align:center;margin:.4rem 0;min-height:18px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🎲 How often do you...?</h1>
+  <div class="room-badge" id="header-room-badge"></div>
+</div>
+
+<div id="lobby" class="screen active">
+  <div class="card">
+    <label>Your name</label>
+    <input type="text" id="player-name" placeholder="e.g. Yuki" maxlength="18" autocomplete="off">
+    <label>Room code <span style="font-weight:400;text-transform:none;letter-spacing:0">(leave blank to create a new game)</span></label>
+    <input type="text" id="room-input" placeholder="e.g. XK7M2P" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:3px;font-family:'Nunito',sans-serif;font-weight:700">
+    <div class="error-msg" id="lobby-error"></div>
+    <button class="btn btn-primary" onclick="joinOrCreate()">Join / Create Game →</button>
+  </div>
+  <p class="hint">One student per group creates a game.<br>Share the room code so others can join.</p>
+</div>
+
+<div id="waiting" class="screen">
+  <div class="card">
+    <div class="section-title">Room code — share with your group</div>
+    <div class="room-code-display" id="display-code">------</div>
+    <div class="section-title">Players joined</div>
+    <div id="player-list-el"></div>
+    <div class="error-msg" id="wait-error"></div>
+    <div id="start-area" style="margin-top:.75rem"></div>
+    <button class="btn btn-secondary btn-sm" onclick="leaveGame()" style="margin-top:.4rem">Leave</button>
+  </div>
+  <p class="hint" id="wait-hint">Waiting for players to join...</p>
+</div>
+
+<div id="game" class="screen">
+  <div class="turn-bar" id="turn-bar">Loading...</div>
+  <div id="question-area"></div>
+  <div class="log-bar" id="log-bar">Game started!</div>
+  <div class="board-wrap">
+    <div class="board-grid" id="board-grid"></div>
+  </div>
+  <div class="die-section">
+    <div class="die-face" id="die-face" onclick="rollDie()">⚀</div>
+    <div class="die-result" id="die-result"></div>
+    <button class="btn btn-primary" id="roll-btn" onclick="rollDie()">Roll dice</button>
+  </div>
+  <div class="card" style="padding:.875rem 1.25rem">
+    <div class="section-title">Players</div>
+    <div class="game-players" id="game-players"></div>
+  </div>
+  <button class="btn btn-secondary btn-sm" onclick="leaveGame()">Leave game</button>
+</div>
+
+<div id="winner-screen" class="screen">
+  <div class="winner-screen-inner">
+    <div class="trophy">🏆</div>
+    <div class="winner-name" id="winner-name"></div>
+    <div class="winner-sub">reached the finish line!</div>
+    <button class="btn btn-primary" style="max-width:240px;margin:0 auto" onclick="leaveGame()">Play again</button>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBrsLESE52ZBtE6iXPyO-DU3UstKfcxX48",
+  authDomain: "frequency-adverbs.firebaseapp.com",
+  databaseURL: "https://frequency-adverbs-default-rtdb.firebaseio.com",
+  projectId: "frequency-adverbs",
+  storageBucket: "frequency-adverbs.firebasestorage.app",
+  messagingSenderId: "8272563124",
+  appId: "1:8272563124:web:537beb3582b7a36ef4c0e1",
+  measurementId: "G-D7W5WDM9R6"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const BOARD=[
+  {t:"Start",type:"start"},{t:"HARDLY\nEVER",type:"adverb"},{t:"read a\nnewspaper?",type:"q"},{t:"play\nsport?",type:"q"},{t:"Go forward\n2 spaces",type:"special",cls:"special-fwd",val:2},
+  {t:"eat fast\nfood?",type:"q"},{t:"listen to\nmusic?",type:"q"},{t:"Oh no!\nGo back 3",type:"special",cls:"special-back",val:-3},{t:"travel by\nairplane?",type:"q"},{t:"NEVER",type:"adverb"},
+  {t:"buy\nclothes?",type:"q"},{t:"chat\nonline?",type:"q"},{t:"get up\nearly?",type:"q"},{t:"Often",type:"adverb"},{t:"exercise?",type:"q"},
+  {t:"go out\nwith\nfriends?",type:"q"},{t:"Sometimes",type:"adverb"},{t:"listen to\nthe radio?",type:"q"},{t:"twice\na week",type:"adverb"},{t:"speak\nEnglish?",type:"q"},
+  {t:"eat\nfruit?",type:"q"},{t:"Miss a\nturn",type:"special",cls:"special-miss",val:0},{t:"once\na month",type:"adverb"},{t:"go on\nholiday?",type:"q"},{t:"Super skip!\nMove ahead 3",type:"special",cls:"special-fwd",val:3},
+  {t:"play\ncomputer\ngames?",type:"q"},{t:"ONCE\nA WEEK",type:"adverb"},{t:"do\nhousework?",type:"q"},{t:"Go back\n1 space",type:"special",cls:"special-back",val:-1},{t:"watch\nfilms?",type:"q"},
+  {t:"ALWAYS",type:"adverb"},{t:"check your\nemail?",type:"q"},{t:"go to\nbed late?",type:"q"},{t:"brush your\nteeth?",type:"q"},{t:"go\ncycling?",type:"q"},
+  {t:"go to the\ndentist?",type:"q"},{t:"go\nshopping?",type:"q"},{t:"study\nEnglish?",type:"q"},{t:"use the\nInternet?",type:"q"},{t:"USUALLY",type:"adverb"},{t:"🏁 Finish",type:"finish"}
+];
+const TOTAL=BOARD.length;
+const TOKEN_COLORS=["#E24B4A","#3b6ef0","#22c97a","#f5a623","#7c4dff","#f06090"];
+const DIE_FACES=["⚀","⚁","⚂","⚃","⚄","⚅"];
+
+let myId=null,myName="",roomCode="",roomRef=null,stateListener=null,localState=null,hasRolled=false;
+
+function genId(){return Math.random().toString(36).slice(2,10)}
+function genRoom(){return Math.random().toString(36).slice(2,8).toUpperCase()}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+
+function joinOrCreate(){
+  const name=document.getElementById('player-name').value.trim();
+  const code=document.getElementById('room-input').value.trim().toUpperCase();
+  if(!name){document.getElementById('lobby-error').textContent='Please enter your name.';return}
+  document.getElementById('lobby-error').textContent='';
+  myId=genId();myName=name;roomCode=code||genRoom();
+  if(!code)createRoom();else joinRoom();
+}
+
+function createRoom(){
+  const me={id:myId,name:myName,pos:0,color:TOKEN_COLORS[0]};
+  const state={players:[me],phase:'lobby',turn:0,host:myId,log:'',lastLand:-1,lastLander:''};
+  roomRef=db.ref('rooms/'+roomCode);
+  roomRef.set(state).then(()=>{
+    document.getElementById('display-code').textContent=roomCode;
+    document.getElementById('header-room-badge').textContent=roomCode;
+    document.getElementById('header-room-badge').style.display='block';
+    show('waiting');listenToRoom();
+  }).catch(()=>{document.getElementById('lobby-error').textContent='Connection error. Please try again.';});
+}
+
+function joinRoom(){
+  roomRef=db.ref('rooms/'+roomCode);
+  roomRef.once('value').then(snap=>{
+    const state=snap.val();
+    if(!state){document.getElementById('lobby-error').textContent='Room not found. Check the code.';return}
+    if(state.phase!=='lobby'){document.getElementById('lobby-error').textContent='That game has already started.';return}
+    const used=state.players.map(p=>p.color);
+    const color=TOKEN_COLORS.find(c=>!used.includes(c))||TOKEN_COLORS[state.players.length%TOKEN_COLORS.length];
+    state.players.push({id:myId,name:myName,pos:0,color});
+    roomRef.set(state).then(()=>{
+      document.getElementById('display-code').textContent=roomCode;
+      document.getElementById('header-room-badge').textContent=roomCode;
+      document.getElementById('header-room-badge').style.display='block';
+      show('waiting');listenToRoom();
+    });
+  }).catch(()=>{document.getElementById('lobby-error').textContent='Connection error.';});
+}
+
+function listenToRoom(){
+  if(stateListener)roomRef.off('value',stateListener);
+  stateListener=roomRef.on('value',snap=>{
+    const state=snap.val();
+    if(!state)return;
+    localState=state;
+    if(state.phase==='lobby')renderWaiting(state);
+    else if(state.phase==='playing'){show('game');renderGame(state);}
+    else if(state.phase==='won')renderWinner(state);
+  });
+}
+
+function renderWaiting(state){
+  document.getElementById('player-list-el').innerHTML=state.players.map(p=>`<div class="player-item"><span class="token" style="background:${p.color}"></span><span>${esc(p.name)}${p.id===state.host?' 👑':''}</span>${p.id===myId?'<span class="you-badge">you</span>':''}</div>`).join('');
+  const isHost=state.host===myId;
+  const sa=document.getElementById('start-area');
+  if(isHost&&state.players.length>=2){sa.innerHTML=`<button class="btn btn-green" onclick="startGame()">Start Game (${state.players.length} players) →</button>`;document.getElementById('wait-hint').textContent='Ready! Tap Start when everyone has joined.';}
+  else if(isHost){sa.innerHTML='';document.getElementById('wait-hint').textContent='Waiting for at least 2 players to join...';}
+  else{sa.innerHTML='';document.getElementById('wait-hint').textContent='Waiting for the host to start the game...';}
+}
+
+function startGame(){
+  if(!localState||localState.host!==myId)return;
+  roomRef.set({...localState,phase:'playing',turn:0,log:'Game started! '+localState.players[0].name+' goes first.',lastLand:-1,lastLander:''});
+}
+
+function myPlayer(s){return s.players.find(p=>p.id===myId)}
+function currentPlayer(s){return s.players[s.turn%s.players.length]}
+function isMyTurn(s){return currentPlayer(s)?.id===myId}
+
+function renderGame(state){
+  const cp=currentPlayer(state),mine=isMyTurn(state);
+  const tb=document.getElementById('turn-bar');
+  tb.className='turn-bar '+(mine?'mine':'other');
+  tb.textContent=mine?'⭐ Your turn! Tap the dice to roll.':cp.name+"'s turn...";
+  document.getElementById('log-bar').textContent=state.log||'';
+  renderQuestion(state);renderBoard(state);renderDie(mine);renderGamePlayers(state);
+}
+
+function renderQuestion(state){
+  const qa=document.getElementById('question-area');
+  if(state.lastLand>=0&&state.lastLander){
+    const cell=BOARD[state.lastLand],lander=state.players.find(p=>p.id===state.lastLander);
+    if(cell&&cell.type==='q'&&lander){qa.innerHTML=`<div class="question-card"><div class="q-label">Ask ${esc(lander.name)}:</div><div class="q-text">How often do you ${cell.t.replace(/\n/g,' ')}?</div><div class="q-sub">Answer with an adverb of frequency!</div></div>`;return;}
+  }
+  qa.innerHTML='';
+}
+
+function renderBoard(state){
+  const myPos=myPlayer(state)?.pos??-1;
+  document.getElementById('board-grid').innerHTML=BOARD.map((cell,i)=>{
+    const here=state.players.filter(p=>p.pos===i);
+    const tokens=here.map(p=>`<span class="cell-token" style="background:${p.color}" title="${esc(p.name)}"></span>`).join('');
+    let cls='cell';
+    if(cell.type==='start')cls+=' start-cell';
+    else if(cell.type==='finish')cls+=' finish-cell';
+    else if(cell.type==='adverb')cls+=' adverb';
+    else if(cell.type==='special')cls+=' '+(cell.cls||'special-fwd');
+    else cls+=' q-cell';
+    if(i===myPos)cls+=' active-cell';
+    return`<div class="${cls}"><span>${cell.t.replace(/\n/g,'<br>')}</span>${tokens?`<div class="cell-tokens">${tokens}</div>`:''}</div>`;
+  }).join('');
+}
+
+function renderDie(mine){
+  const btn=document.getElementById('roll-btn');
+  btn.disabled=!mine||hasRolled;
+  btn.textContent=mine?(hasRolled?'Waiting...':'Roll dice'):'Wait for your turn';
+  document.getElementById('die-face').style.cursor=mine&&!hasRolled?'pointer':'default';
+}
+
+function renderGamePlayers(state){
+  const turnIdx=state.turn%state.players.length;
+  document.getElementById('game-players').innerHTML=state.players.map((p,i)=>{
+    const isCurrent=i===turnIdx,pct=Math.round((p.pos/(TOTAL-1))*100);
+    return`<div class="game-player-row"><span class="token" style="background:${p.color}"></span><span class="gp-name" style="${isCurrent?'color:var(--blue)':''}">${esc(p.name)}${p.id===myId?' (you)':''}</span><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%;background:${p.color}"></div></div><span class="gp-pos">${p.pos}/${TOTAL-1}</span>${isCurrent?'<span class="gp-arrow">▶</span>':''}</div>`;
+  }).join('');
+}
+
+async function rollDie(){
+  if(!localState||!isMyTurn(localState)||hasRolled)return;
+  hasRolled=true;renderDie(false);
+  const roll=Math.floor(Math.random()*6)+1;
+  animateDie(roll);
+  document.getElementById('die-result').textContent='You rolled a '+roll+'!';
+  const state=JSON.parse(JSON.stringify(localState));
+  const cp=state.players[state.turn%state.players.length];
+  if(cp.id!==myId){hasRolled=false;return}
+  let newPos=Math.min(cp.pos+roll,TOTAL-1),log=cp.name+' rolled '+roll,skipTurn=false;
+  const cell=BOARD[newPos];
+  if(cell.type==='special'){
+    if(cell.val===0){log+=' — miss a turn!';skipTurn=true;}
+    else{newPos=Math.max(0,Math.min(TOTAL-1,newPos+cell.val));log+=cell.val>0?' — super skip forward!':' — go back '+Math.abs(cell.val)+' space'+(Math.abs(cell.val)>1?'s':'')+'!';}
+  }
+  cp.pos=newPos;state.lastLand=newPos;state.lastLander=myId;state.log=log;
+  if(newPos>=TOTAL-1){state.phase='won';state.winner=myId;state.log='🏆 '+cp.name+' won the game!';}
+  else{state.turn=state.turn+1+(skipTurn?1:0);}
+  await roomRef.set(state);
+  setTimeout(()=>{hasRolled=false;if(localState)renderDie(isMyTurn(localState));},1200);
+}
+
+function animateDie(val){
+  const el=document.getElementById('die-face');
+  el.classList.remove('die-rolling');void el.offsetWidth;el.classList.add('die-rolling');
+  let i=0;const t=setInterval(()=>{el.textContent=DIE_FACES[Math.floor(Math.random()*6)];if(++i>10){clearInterval(t);el.textContent=DIE_FACES[val-1];el.classList.remove('die-rolling');}},55);
+}
+
+function renderWinner(state){
+  if(stateListener&&roomRef)roomRef.off('value',stateListener);
+  const w=state.players.find(p=>p.id===state.winner);
+  document.getElementById('winner-name').textContent=(w?w.name:'Someone')+' wins!';
+  show('winner-screen');
+}
+
+function leaveGame(){
+  if(stateListener&&roomRef)roomRef.off('value',stateListener);
+  if(roomRef&&localState){
+    localState.players=localState.players.filter(p=>p.id!==myId);
+    if(localState.players.length===0)roomRef.remove();
+    else{if(localState.host===myId)localState.host=localState.players[0].id;roomRef.set(localState);}
+  }
+  roomRef=null;stateListener=null;localState=null;myId=null;roomCode='';hasRolled=false;
+  document.getElementById('player-name').value='';
+  document.getElementById('room-input').value='';
+  document.getElementById('header-room-badge').style.display='none';
+  document.getElementById('lobby-error').textContent='';
+  show('lobby');
+}
+</script>
+</body>
+</html>
