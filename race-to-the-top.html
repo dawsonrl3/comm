@@ -174,6 +174,12 @@
     color:var(--ink);padding:10px 16px;border-radius:12px;font-size:13.5px;box-shadow:0 10px 30px #0008;opacity:0;
     pointer-events:none;transition:opacity .2s;z-index:50}
   .toast.show{opacity:1}
+  .syncline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);
+    background:#0e0b2e;border:1px solid var(--line);border-radius:11px;padding:9px 11px;margin-bottom:12px}
+  .syncline .d{width:9px;height:9px;border-radius:50%;background:var(--ink-dim);flex:0 0 auto}
+  .syncline.ok{border-color:#3ddc9755} .syncline.ok .d{background:var(--good)}
+  .syncline.bad{border-color:#ff7a5955;color:#ffc3b3} .syncline.bad .d{background:var(--pA)}
+  .syncline .recheck{margin-left:auto;background:none;border:0;color:var(--dawn-2);font-size:12px;cursor:pointer;text-decoration:underline;padding:0}
   .cell[data-pos]{cursor:pointer}
   .cell[data-pos]:active{transform:scale(.97)}
   .modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:22px;
@@ -273,10 +279,23 @@ async function saveGame(state){
   return state;
 }
 
+// Probe whether shared storage round-trips on this device.
+async function checkSync(){
+  if(!hasStore) return false;
+  try{
+    const k='rttt-probe';
+    const stamp='p'+Date.now()+Math.random();
+    const w=await window.storage.set(k, stamp, true);
+    if(!w) return false;
+    const r=await window.storage.get(k, true);
+    return !!(r && r.value===stamp);
+  }catch(e){ return false; }
+}
+
 /* ============================================================
    APP STATE
    ============================================================ */
-const G = { code:null, me:null, state:null, lastJson:'', rolling:false, joinMode:'create', local:false };
+const G = { code:null, me:null, state:null, lastJson:'', rolling:false, joinMode:'create', local:false, syncStatus:'checking' };
 const app = document.getElementById('app');
 const toastEl = document.getElementById('toast');
 let toastT;
@@ -295,10 +314,15 @@ function nameOf(state,seat){ const p=playerBySeat(state,seat); return p?p.name:(
 /* ============================================================
    LOBBY
    ============================================================ */
+function syncBadge(){
+  const s=G.syncStatus;
+  if(s==='ok') return '<div class="syncline ok"><span class="d"></span>Shared storage reachable on this device. <button class="recheck" data-act="recheck">re-check</button></div>';
+  if(s==='fail') return '<div class="syncline bad"><span class="d"></span>Can’t reach shared storage here — codes won’t sync. Publish the app and open the <b>shared link</b> (not the preview), or use One device. <button class="recheck" data-act="recheck">re-check</button></div>';
+  return '<div class="syncline"><span class="d"></span>Checking connection… <button class="recheck" data-act="recheck">re-check</button></div>';
+}
 function renderLobby(){
   const m=G.joinMode;
-  const storeWarn = hasStore ? '' :
-    '<div class="hint" style="color:#ffc08a">Note: shared codes only sync once this app is published and each phone opens that shared link. To play right now, use <b style="color:#ffc08a">One device</b> mode.</div>';
+  const badge = (m==='create'||m==='join') ? syncBadge() : '';
   app.innerHTML = `
   ${refBlock(true)}
 
@@ -308,6 +332,7 @@ function renderLobby(){
       <button data-act="mode" data-v="join" class="${m==='join'?'on':''}">Join (code)</button>
       <button data-act="mode" data-v="local" class="${m==='local'?'on':''}">One device</button>
     </div>
+    ${badge}
     ${ m==='create' ? `
       <div class="hint" style="margin:0 0 12px">For one captain. You’ll get a code; your two teammates join from their own phones.</div>
       <label class="lbl">Captain — your name</label>
@@ -315,7 +340,6 @@ function renderLobby(){
       <div style="height:12px"></div>
       <button class="btn" data-act="create">Create game &amp; get a code</button>
       <div class="hint">Everyone needs to open the <b>same shared app link</b> first, then your teammates tap <b>Join (code)</b> and enter your code.</div>
-      ${storeWarn}
     ` : m==='join' ? `
       <div class="hint" style="margin:0 0 12px">Got a code from your captain? Join here.</div>
       <label class="lbl">Game code</label>
@@ -326,7 +350,6 @@ function renderLobby(){
       <div style="height:12px"></div>
       <button class="btn" data-act="join">Join game</button>
       <div class="hint">Use your own name so the game can tell the three of you apart.</div>
-      ${storeWarn}
     ` : `
       <div class="hint" style="margin:0 0 12px">No separate phones? Three students share one phone and pass it around each turn.</div>
       <label class="lbl">Student A</label>
@@ -358,6 +381,11 @@ async function doCreate(){
     roll:null, square:null, move:null, winner:null, v:0,
   };
   await saveGame(state);
+  const back = await loadGame(code);
+  if(!back){
+    err.textContent='Couldn’t save the game to shared storage. Publish the app and open the shared link (not the chat preview), then try again — or use One device mode.';
+    return;
+  }
   G.code=code; G.me=0; G.state=state; G.lastJson=JSON.stringify(state);
   await sSet(meKey(code),'0',false);
   await sSet('rttt-last', JSON.stringify({code,seat:0}), false);
@@ -378,7 +406,7 @@ async function doJoin(){
   // if our write was lost, we re-read the (now-updated) roster and try again.
   for(let attempt=0; attempt<6; attempt++){
     const state=await loadGame(code);
-    if(!state){ err.textContent='No game found with that code. Check it with your captain.'; return; }
+    if(!state){ err.innerHTML='No game found with that code.<br>Make sure you opened the <b>same shared link your captain used</b> (not a preview), the app is published, and the code is exactly right.'; return; }
     const existing=(state.players||[]).find(p=>p.name.toLowerCase()===lc);
     if(existing){ seat=existing.seat; break; }
     if((state.players||[]).length>=3){ err.textContent='That game already has three players.'; return; }
@@ -745,6 +773,7 @@ document.addEventListener('click', async (e)=>{
   const act=t.getAttribute('data-act');
   if(act==='closeq'){ document.getElementById('qmodal').classList.remove('show'); return; }
   if(act==='mode'){ G.joinMode=t.getAttribute('data-v'); renderLobby(); return; }
+  if(act==='recheck'){ G.syncStatus='checking'; renderLobby(); G.syncStatus=(await checkSync())?'ok':'fail'; renderLobby(); return; }
   if(act==='create'){ await doCreate(); return; }
   if(act==='createlocal'){ await doCreateLocal(); return; }
   if(act==='join'){ await doJoin(); return; }
@@ -788,6 +817,9 @@ document.addEventListener('click', async (e)=>{
       }
     }
   }catch(e){}
+  // 3) fresh lobby — probe shared storage so the captain knows before sharing a code
   render();
+  G.syncStatus = (await checkSync()) ? 'ok' : 'fail';
+  if(!G.code) renderLobby();
 })();
 </script>
