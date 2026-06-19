@@ -1,0 +1,702 @@
+<!-- Race to the Top — digital future-tenses board game -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0c0a26; --bg-1:#15123f; --bg-2:#221a55;
+    --ink:#eef0ff; --ink-soft:#b8bce0; --ink-dim:#8086b8;
+    --line:#332b6b; --line-soft:#2a2358;
+    --dawn:#ff8a5c;      /* sunrise accent */
+    --dawn-2:#ffb347;
+    --pA:#ff7a59;        /* player A — coral */
+    --pB:#3ddc97;        /* player B — mint  */
+    --pC:#7aa2ff;        /* player C — periwinkle */
+    --good:#3ddc97;
+    --card:rgba(255,255,255,.045);
+    --card-2:rgba(255,255,255,.07);
+    --radius:18px;
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--body); color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #3a2f8a33, transparent 60%),
+      radial-gradient(900px 500px at 90% 110%, #ff8a5c22, transparent 55%),
+      linear-gradient(180deg,var(--bg-1),var(--bg-0) 70%);
+    background-attachment:fixed;
+    min-height:100vh; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:680px;margin:0 auto;padding:18px 16px 64px}
+  b,strong{color:var(--dawn-2);font-weight:700}
+
+  /* ---------- masthead ---------- */
+  .mast{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
+  .mast .mark{
+    width:42px;height:42px;border-radius:12px;flex:0 0 auto;
+    background:linear-gradient(150deg,var(--dawn),var(--dawn-2));
+    display:grid;place-items:center;color:#2a1500;font-weight:800;
+    font-family:var(--display);box-shadow:0 6px 22px #ff8a5c44;
+    position:relative;overflow:hidden;
+  }
+  .mast .mark::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,#ffffff55,transparent 45%)}
+  .mast h1{font-family:var(--display);font-size:22px;letter-spacing:-.01em;margin:0;line-height:1.05}
+  .mast .sub{color:var(--ink-dim);font-size:12.5px;font-weight:500;letter-spacing:.02em}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .card + .card{margin-top:14px}
+
+  /* ---------- buttons / inputs ---------- */
+  .btn{
+    appearance:none;border:0;cursor:pointer;font-family:var(--display);
+    font-weight:600;font-size:16px;color:#2a1500;border-radius:14px;
+    padding:14px 18px;width:100%;
+    background:linear-gradient(150deg,var(--dawn-2),var(--dawn));
+    box-shadow:0 8px 24px #ff8a5c3a;transition:transform .08s ease,filter .15s ease;
+  }
+  .btn:active{transform:translateY(1px) scale(.995)}
+  .btn:disabled{filter:grayscale(.6) brightness(.7);cursor:not-allowed;box-shadow:none}
+  .btn.ghost{background:var(--card-2);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .btn.small{font-size:14px;padding:11px 14px;width:auto}
+  .field{width:100%;background:#0e0b2e;border:1px solid var(--line);color:var(--ink);
+    border-radius:12px;padding:13px 14px;font-size:16px;font-family:var(--body);margin-top:8px}
+  .field::placeholder{color:var(--ink-dim)}
+  .field.code{font-family:var(--display);letter-spacing:.28em;text-transform:uppercase;text-align:center;font-size:22px}
+  label.lbl{display:block;font-size:12.5px;color:var(--ink-soft);font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .row{display:flex;gap:10px}
+  .seg{display:flex;background:#0e0b2e;border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px;margin-bottom:14px}
+  .seg button{flex:1;border:0;background:transparent;color:var(--ink-soft);font-family:var(--display);
+    font-weight:600;font-size:14px;padding:9px;border-radius:9px;cursor:pointer}
+  .seg button.on{background:var(--card-2);color:var(--ink)}
+  .hint{color:var(--ink-dim);font-size:12.5px;margin-top:10px}
+  .err{color:#ff9a8a;font-size:13px;margin-top:10px;min-height:0}
+
+  /* ---------- reference / example ---------- */
+  details.ref{background:linear-gradient(180deg,#ffffff0d,#ffffff05);border:1px solid var(--line);border-radius:var(--radius);padding:0;overflow:hidden}
+  details.ref summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;
+    font-family:var(--display);font-weight:600;font-size:14px}
+  details.ref summary::-webkit-details-marker{display:none}
+  details.ref summary .chev{color:var(--ink-dim);transition:transform .2s}
+  details.ref[open] summary .chev{transform:rotate(90deg)}
+  .script{padding:4px 16px 16px}
+  .line{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line-soft)}
+  .line:first-child{border-top:0}
+  .who{flex:0 0 auto;font-family:var(--display);font-weight:700;font-size:12px;padding:3px 8px;border-radius:999px;height:fit-content;margin-top:2px}
+  .who.A{background:#ff7a5922;color:var(--pA);border:1px solid #ff7a5955}
+  .who.B{background:#3ddc9722;color:var(--pB);border:1px solid #3ddc9755}
+  .who.C{background:#7aa2ff22;color:var(--pC);border:1px solid #7aa2ff55}
+  .say{font-size:14.5px;color:var(--ink)}
+  .say.q{font-style:italic}
+
+  /* ---------- players panel ---------- */
+  .you-tag{font-size:12.5px;color:var(--ink-soft)}
+  .pchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .pchip{display:flex;align-items:center;gap:8px;background:var(--card-2);border:1px solid var(--line);
+    border-radius:999px;padding:6px 12px 6px 6px;font-size:13.5px;font-weight:600}
+  .dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);
+    font-weight:700;font-size:12px;color:#10121f}
+  .dot.A{background:var(--pA)} .dot.B{background:var(--pB)} .dot.C{background:var(--pC)}
+  .pchip.empty{opacity:.5;font-weight:500}
+  .pchip.turn{outline:2px solid var(--dawn-2);outline-offset:1px}
+
+  .codebadge{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:#0e0b2e;border:1px dashed var(--line);border-radius:14px;padding:12px 14px;margin-top:6px}
+  .codebadge .c{font-family:var(--display);font-size:26px;letter-spacing:.22em;font-weight:700;color:var(--dawn-2)}
+  .codebadge .l{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-dim)}
+
+  /* ---------- turn panel ---------- */
+  .turnhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:2px}
+  .turnhead .h{font-family:var(--display);font-size:18px;font-weight:700}
+  .turnhead .h small{display:block;font-family:var(--body);font-weight:500;font-size:12.5px;color:var(--ink-dim);letter-spacing:.02em}
+  .squareno{font-family:var(--display);font-weight:700;color:var(--ink-dim);font-size:13px}
+  .qbox{background:#0e0b2e;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0;font-size:17px}
+  .qbox .qlabel{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--dawn);font-weight:700;margin-bottom:6px;font-family:var(--display)}
+  .actionbox{display:flex;align-items:center;gap:12px;background:#0e0b2e;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:12px 0}
+  .actionbox .ico{font-size:24px}
+
+  /* ---------- die ---------- */
+  .dietray{display:flex;align-items:center;gap:16px;margin-top:6px}
+  .die{width:74px;height:74px;border-radius:18px;background:linear-gradient(150deg,#fff,#dfe3ff);
+    box-shadow:0 10px 26px #0006, inset 0 -6px 10px #aab0e055, inset 0 4px 6px #fff;
+    display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+    padding:12px;flex:0 0 auto}
+  .die i{align-self:center;justify-self:center;width:13px;height:13px;border-radius:50%;background:#1a1442;visibility:hidden}
+  .die.rolling{animation:shake .5s ease}
+  @keyframes shake{0%,100%{transform:translate(0,0) rotate(0)}
+    25%{transform:translate(-3px,-4px) rotate(-8deg)}50%{transform:translate(4px,2px) rotate(7deg)}
+    75%{transform:translate(-2px,3px) rotate(-5deg)}}
+  /* pip positions */
+  .die i:nth-child(1){grid-area:1/1} .die i:nth-child(2){grid-area:1/3}
+  .die i:nth-child(3){grid-area:2/2} .die i:nth-child(4){grid-area:1/2}
+  .die i:nth-child(5){grid-area:3/2} .die i:nth-child(6){grid-area:2/1}
+  .die i:nth-child(7){grid-area:2/3}
+  .die[data-n="1"] i:nth-child(3){visibility:visible}
+  .die[data-n="2"] i:nth-child(1),.die[data-n="2"] i:nth-child(5){visibility:visible}
+  .die[data-n="3"] i:nth-child(1),.die[data-n="3"] i:nth-child(3),.die[data-n="3"] i:nth-child(5){visibility:visible}
+  .die[data-n="4"] i:nth-child(1),.die[data-n="4"] i:nth-child(2),.die[data-n="4"] i:nth-child(5),.die[data-n="4"] i:nth-child(6){visibility:visible}
+  .die[data-n="5"] i:nth-child(1),.die[data-n="5"] i:nth-child(2),.die[data-n="5"] i:nth-child(3),.die[data-n="5"] i:nth-child(5),.die[data-n="5"] i:nth-child(6){visibility:visible}
+  .die[data-n="6"] i:nth-child(1),.die[data-n="6"] i:nth-child(2),.die[data-n="6"] i:nth-child(4),.die[data-n="6"] i:nth-child(5),.die[data-n="6"] i:nth-child(6),.die[data-n="6"] i:nth-child(7){visibility:visible}
+  .dieinfo{font-size:13.5px;color:var(--ink-soft)}
+  .dieinfo b{color:var(--ink)}
+  .waiting{color:var(--ink-soft);font-size:15px;display:flex;align-items:center;gap:8px}
+  .pulse{width:9px;height:9px;border-radius:50%;background:var(--dawn-2);animation:pl 1.1s infinite}
+  @keyframes pl{0%,100%{opacity:.3}50%{opacity:1}}
+
+  /* ---------- board ---------- */
+  .board{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+  .brow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .cell{position:relative;aspect-ratio:1/.82;border-radius:12px;border:1px solid var(--line-soft);
+    background:var(--card);padding:6px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+  .cell .n{font-family:var(--display);font-size:11px;font-weight:700;color:var(--ink-dim)}
+  .cell .g{font-size:15px;line-height:1;align-self:flex-start}
+  .cell.start,.cell.finish{background:linear-gradient(150deg,#ff8a5c2e,#ffb34722);border-color:#ff8a5c66}
+  .cell.start .lab,.cell.finish .lab{font-family:var(--display);font-weight:700;font-size:12px;color:var(--dawn-2);letter-spacing:.04em}
+  .cell.action{background:#7aa2ff14;border-color:#7aa2ff44}
+  .cell.free{background:#3ddc9714;border-color:#3ddc9744}
+  .cell.here{box-shadow:0 0 0 2px var(--dawn-2) inset}
+  .toks{display:flex;gap:3px;flex-wrap:wrap}
+  .tok{width:16px;height:16px;border-radius:50%;border:2px solid #0c0a26;display:grid;place-items:center;
+    font-family:var(--display);font-weight:700;font-size:9px;color:#10121f}
+  .tok.A{background:var(--pA)} .tok.B{background:var(--pB)} .tok.C{background:var(--pC)}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;color:var(--ink-dim);font-size:12px}
+  .legend span{display:flex;align-items:center;gap:5px}
+
+  .winbanner{text-align:center;padding:22px 16px}
+  .winbanner .big{font-family:var(--display);font-size:26px;font-weight:700;color:var(--dawn-2)}
+  .footnote{text-align:center;color:var(--ink-dim);font-size:11.5px;margin-top:22px}
+  .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#0e0b2e;border:1px solid var(--line);
+    color:var(--ink);padding:10px 16px;border-radius:12px;font-size:13.5px;box-shadow:0 10px 30px #0008;opacity:0;
+    pointer-events:none;transition:opacity .2s;z-index:50}
+  .toast.show{opacity:1}
+  .cell[data-pos]{cursor:pointer}
+  .cell[data-pos]:active{transform:scale(.97)}
+  .modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:22px;
+    background:#06041aee;backdrop-filter:blur(4px)}
+  .modal.show{display:flex}
+  .modal .box{max-width:420px;width:100%;background:linear-gradient(180deg,var(--bg-2),var(--bg-1));
+    border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+  .modal .ql{font-family:var(--display);font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--dawn);font-weight:700}
+  .modal .qt{font-size:20px;margin:10px 0 18px;line-height:1.4}
+</style>
+
+<div class="wrap">
+  <div class="mast">
+    <div class="mark">↑</div>
+    <div>
+      <h1>Race to the Top</h1>
+      <div class="sub">Future-tenses speaking game</div>
+    </div>
+  </div>
+  <div id="app"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="qmodal"><div class="box">
+  <div class="ql" id="qmodal-l"></div>
+  <div class="qt" id="qmodal-t"></div>
+  <button class="btn ghost" data-act="closeq">Close</button>
+</div></div>
+
+<script>
+/* ============================================================
+   DATA — squares with future indicators in bold
+   ============================================================ */
+const SQUARES = {
+  1:{t:'q', h:'What time <b>are</b> you <b>going to get up</b> tomorrow?'},
+  2:{t:'q', h:'What <b>are</b> your plans for this evening?'},
+  3:{t:'q', h:'Do you think you <b>will</b> ever <b>live</b> abroad?'},
+  4:{t:'act', d:-1, lab:'Go back one space', ico:'↓'},
+  5:{t:'q', h:'What arrangements <b>have</b> you <b>made</b> for next week?'},
+  6:{t:'q', h:'Do you think you <b>might learn</b> another language in the future?'},
+  7:{t:'q', h:'What <b>will</b> you probably <b>eat</b> today?'},
+  8:{t:'q', h:'What do you think the weather <b>will be</b> like tomorrow?'},
+  9:{t:'act', d:2, lab:'Move forward two spaces', ico:'↑'},
+  10:{t:'q', h:'How <b>are</b> you <b>going to get</b> home from class?'},
+  11:{t:'q', h:'What job <b>would</b> you <b>like to have</b> in the future?'},
+  12:{t:'free'},
+  13:{t:'q', h:'<b>Will</b> people <b>work</b> more or less in the future?'},
+  14:{t:'q', h:'Where <b>are</b> you <b>having</b> dinner tonight?'},
+  15:{t:'q', h:'What do you think the world <b>will be</b> like in 100 years?'},
+  16:{t:'q', h:'How long <b>are</b> you <b>going to continue</b> to study English?'},
+  17:{t:'act', d:-2, lab:'Go back two spaces', ico:'↓'},
+  18:{t:'q', h:'Do you think you <b>will live</b> for a long time?'},
+  19:{t:'q', h:'<b>Are</b> you <b>going away</b> for the weekend soon?'},
+  20:{t:'q', h:'Do you think you <b>will</b> ever <b>be</b> rich or famous?'},
+  21:{t:'free'},
+  22:{t:'q', h:"What's the next film you <b>are going to see</b>?"},
+  23:{t:'q', h:'How do you think computers <b>will change</b> in the future?'},
+  24:{t:'q', h:'What <b>are</b> you <b>doing</b> this weekend?'},
+  25:{t:'q', h:'What <b>are</b> you <b>going to do</b> after class?'},
+  26:{t:'q', h:'How <b>will</b> transport and travel <b>change</b> in the future?'},
+  27:{t:'act', d:1, lab:'Move forward one space', ico:'↑'},
+  28:{t:'q', h:'What do you think <b>will be</b> your next big achievement?'},
+  29:{t:'q', h:'When do you think you <b>will get</b> married?'},
+  30:{t:'q', h:'What <b>are</b> you <b>doing</b> tomorrow?'},
+  31:{t:'free'},
+  32:{t:'q', h:'<b>Are</b> you <b>meeting</b> anyone after class?'},
+  33:{t:'q', h:'Do you think robots <b>will</b> ever <b>replace</b> humans?'},
+  34:{t:'act', d:-3, lab:'Go back three spaces', ico:'↓'},
+};
+const START=0, FINISH=35;
+const SEAT_LETTER=['A','B','C'];
+
+/* ============================================================
+   STORAGE — shared persistent state (survives scroll & reload)
+   with a graceful in-memory fallback
+   ============================================================ */
+const mem={};
+const hasStore = typeof window!=='undefined' && window.storage && window.storage.get;
+async function sGet(key,shared){
+  if(!hasStore){ return mem[key]!==undefined?{value:mem[key]}:null; }
+  try{ return await window.storage.get(key,shared); }catch(e){ return null; }
+}
+async function sSet(key,val,shared){
+  if(!hasStore){ mem[key]=val; return {value:val}; }
+  try{ return await window.storage.set(key,val,shared); }catch(e){ return null; }
+}
+const gameKey = c => 'rttt:'+c;
+const meKey   = c => 'rttt-me:'+c;
+
+async function loadGame(code){
+  const r = await sGet(gameKey(code), true);
+  if(!r||!r.value) return null;
+  try{ return JSON.parse(r.value); }catch(e){ return null; }
+}
+async function saveGame(state){
+  state.v=(state.v||0)+1;
+  await sSet(gameKey(state.code), JSON.stringify(state), true);
+  return state;
+}
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+const G = { code:null, me:null, state:null, lastJson:'', rolling:false, joinMode:'create' };
+const app = document.getElementById('app');
+const toastEl = document.getElementById('toast');
+let toastT;
+function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>toastEl.classList.remove('show'),1800); }
+
+function genCode(){
+  const a='ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s='';
+  for(let i=0;i<4;i++) s+=a[Math.floor(Math.random()*a.length)];
+  return s;
+}
+function clamp(n){ return Math.max(0,Math.min(FINISH,n)); }
+function playerBySeat(state,seat){ return (state.players||[]).find(p=>p.seat===seat)||null; }
+function nameOf(state,seat){ const p=playerBySeat(state,seat); return p?p.name:('Seat '+SEAT_LETTER[seat]); }
+
+/* ============================================================
+   LOBBY
+   ============================================================ */
+function renderLobby(){
+  const m=G.joinMode;
+  app.innerHTML = `
+  <details class="ref" open>
+    <summary><span>Example — how one square works</span><span class="chev">›</span></summary>
+    <div class="script">
+      <div class="line"><span class="who A">A</span><span class="say q">“<b>Are</b> you <b>meeting</b> anyone after class?”</span></div>
+      <div class="line"><span class="who B">B</span><span class="say">“Yeah, I<b>’m meeting</b> my friend Aya. We<b>’re having</b> lunch together in Sumiyoshi.”</span></div>
+      <div class="line"><span class="who C">C</span><span class="say q">“Where <b>are</b> you <b>going to have</b> lunch?”</span></div>
+      <div class="line"><span class="who B">B</span><span class="say">“We don’t know yet. We <b>might have</b> lunch at Taj because Aya loves Indian food.”</span></div>
+    </div>
+  </details>
+
+  <div class="card" style="margin-top:14px">
+    <div class="seg">
+      <button data-act="mode" data-v="create" class="${m==='create'?'on':''}">Start a game</button>
+      <button data-act="mode" data-v="join" class="${m==='join'?'on':''}">Join a game</button>
+    </div>
+    ${ m==='create' ? `
+      <label class="lbl">Captain — your name</label>
+      <input id="cname" class="field" placeholder="e.g. Kenji" autocomplete="off" maxlength="14">
+      <div style="height:12px"></div>
+      <button class="btn" data-act="create">Create game &amp; get a code</button>
+      <div class="hint">You’ll get a 4-letter code. Share it with the other two students so all three of you join the same game.</div>
+    ` : `
+      <label class="lbl">Game code</label>
+      <input id="jcode" class="field code" placeholder="••••" maxlength="4" autocomplete="off">
+      <div style="height:10px"></div>
+      <label class="lbl">Your name</label>
+      <input id="jname" class="field" placeholder="e.g. Aya" autocomplete="off" maxlength="14">
+      <div style="height:12px"></div>
+      <button class="btn" data-act="join">Join game</button>
+      <div class="hint">Ask your team captain for the code.</div>
+    `}
+    <div class="err" id="lerr"></div>
+  </div>
+  <div class="footnote">Groups of three · play several games at once, each with its own code.</div>
+  `;
+}
+
+async function doCreate(){
+  const name=(document.getElementById('cname').value||'').trim();
+  const err=document.getElementById('lerr');
+  if(!name){ err.textContent='Please type your name first.'; return; }
+  let code, exists=true, tries=0;
+  while(exists && tries<8){ code=genCode(); exists=!!(await loadGame(code)); tries++; }
+  const state={
+    code, players:[{seat:0,name}], started:false,
+    positions:[START,START,START], turn:0, phase:'lobby',
+    roll:null, square:null, move:null, winner:null, v:0,
+  };
+  await saveGame(state);
+  G.code=code; G.me=0; G.state=state; G.lastJson=JSON.stringify(state);
+  await sSet(meKey(code),'0',false);
+  render();
+}
+
+async function doJoin(){
+  const code=(document.getElementById('jcode').value||'').trim().toUpperCase();
+  const name=(document.getElementById('jname').value||'').trim();
+  const err=document.getElementById('lerr');
+  if(code.length!==4){ err.textContent='Enter the 4-letter code.'; return; }
+  if(!name){ err.textContent='Please type your name.'; return; }
+  let state=await loadGame(code);
+  if(!state){ err.textContent='No game found with that code. Check with your captain.'; return; }
+  // already in this game (same name)?
+  let mine=(state.players||[]).find(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(!mine){
+    if((state.players||[]).length>=3){ err.textContent='That game already has three players.'; return; }
+    const seat=state.players.length;
+    state.players.push({seat,name});
+    await saveGame(state);
+    state=await loadGame(code); // re-read to settle
+    mine=(state.players||[]).find(p=>p.name.toLowerCase()===name.toLowerCase());
+    if(!mine){ err.textContent='Could not join — please try again.'; return; }
+  }
+  G.code=code; G.me=mine.seat; G.state=state; G.lastJson=JSON.stringify(state);
+  await sSet(meKey(code),String(mine.seat),false);
+  render();
+}
+
+/* ============================================================
+   GAME ACTIONS
+   ============================================================ */
+async function startGame(){
+  let s=await loadGame(G.code); if(!s) return;
+  if(s.players.length<3){ toast('Need all three players first.'); return; }
+  s.started=true; s.phase='roll'; s.turn=0; s.roll=null; s.square=null; s.move=null;
+  await saveGame(s); pullAndRender(true);
+}
+
+async function rollDie(){
+  if(G.rolling) return;
+  let s=await loadGame(G.code); if(!s||s.phase!=='roll'||s.turn!==G.me) return;
+  G.rolling=true;
+  const n=1+Math.floor(Math.random()*6);
+  // animate locally
+  const dieEl=document.querySelector('.die');
+  if(dieEl){ dieEl.classList.add('rolling'); dieEl.setAttribute('data-n',String(n)); }
+  await new Promise(r=>setTimeout(r,520));
+
+  const seat=s.turn, from=s.positions[seat];
+  let to=from+n;
+  if(to>=FINISH){
+    s.positions[seat]=FINISH; s.winner=seat; s.phase='done';
+    s.roll=n; s.square=null; s.move={from,to:FINISH};
+  } else {
+    const sq=SQUARES[to];
+    if(sq && sq.t==='act'){
+      const dest=clamp(to+sq.d);
+      s.positions[seat]=dest; s.roll=n; s.square=to; s.move={from,landed:to,to:dest};
+      if(dest>=FINISH){ s.winner=seat; s.phase='done'; } else { s.phase='action'; }
+    } else {
+      s.positions[seat]=to; s.phase='converse'; s.roll=n; s.square=to; s.move={from,to};
+    }
+  }
+  await saveGame(s);
+  G.rolling=false;
+  pullAndRender(true);
+}
+
+async function endTurn(){
+  let s=await loadGame(G.code); if(!s) return;
+  if(s.phase!=='converse' && s.phase!=='action') return;
+  s.turn=(s.turn+1)%3; s.phase='roll'; s.roll=null; s.square=null; s.move=null;
+  await saveGame(s); pullAndRender(true);
+}
+
+async function newGame(){
+  let s=await loadGame(G.code); if(!s) return;
+  s.positions=[START,START,START]; s.turn=0; s.phase='roll';
+  s.roll=null; s.square=null; s.move=null; s.winner=null;
+  await saveGame(s); pullAndRender(true);
+}
+
+function leaveGame(){
+  G.code=null; G.me=null; G.state=null; G.lastJson='';
+  render();
+}
+
+/* ============================================================
+   GAME RENDER
+   ============================================================ */
+function rolesFor(turn){
+  return { roller:turn, questioner:(turn+2)%3, follower:(turn+1)%3 };
+}
+
+function buildBoard(state){
+  // rows of 4 positions, boustrophedon, displayed top(FINISH)→bottom(START)
+  let html='<div class="board">';
+  for(let r=8;r>=0;r--){
+    let cells=[4*r,4*r+1,4*r+2,4*r+3];
+    if(r%2===1) cells=cells.slice().reverse();
+    html+='<div class="brow">';
+    for(const pos of cells){
+      html+=cellHTML(pos,state);
+    }
+    html+='</div>';
+  }
+  html+='</div>';
+  return html;
+}
+function cellHTML(pos,state){
+  let cls='cell', glyph='', label='', num='', tap='';
+  if(pos===START){ cls+=' start'; label='<span class="lab">START</span>'; }
+  else if(pos===FINISH){ cls+=' finish'; label='<span class="lab">FINISH</span>'; }
+  else {
+    num='<span class="n">'+pos+'</span>';
+    const sq=SQUARES[pos];
+    if(!sq){ glyph=''; }
+    else if(sq.t==='act'){ cls+=' action'; glyph='<span class="g">'+sq.ico+'</span>'; }
+    else if(sq.t==='free'){ cls+=' free'; glyph='<span class="g">?</span>'; tap=' data-pos="'+pos+'"'; }
+    else { glyph='<span class="g">💬</span>'; tap=' data-pos="'+pos+'"'; }
+  }
+  // tokens here
+  let toks='';
+  (state.positions||[]).forEach((p,seat)=>{
+    if(p===pos){ const L=SEAT_LETTER[seat]; toks+=`<span class="tok ${L}">${L}</span>`; }
+  });
+  const here = (state.positions||[]).some(p=>p===pos) ? ' here':'';
+  return `<div class="${cls}${here}"${tap}>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">${num||label}${glyph}</div>
+      <div class="toks">${toks}</div>
+    </div>`;
+}
+
+function dieHTML(n){
+  const pips='<i></i><i></i><i></i><i></i><i></i><i></i><i></i>';
+  return `<div class="die" data-n="${n||1}">${pips}</div>`;
+}
+
+function turnPanel(state){
+  const {roller,questioner,follower}=rolesFor(state.turn);
+  const rN=nameOf(state,roller), qN=nameOf(state,questioner), fN=nameOf(state,follower);
+  const rL=SEAT_LETTER[roller], qL=SEAT_LETTER[questioner], fL=SEAT_LETTER[follower];
+  const isMine = state.turn===G.me;
+
+  if(state.phase==='done'){
+    const w=nameOf(state,state.winner);
+    return `<div class="card"><div class="winbanner">
+        <div class="big">🏔️ ${escapeHtml(w)} reached the top!</div>
+        <p style="color:var(--ink-soft);margin:8px 0 16px">Race complete. Well played, all three of you.</p>
+        ${G.me===0?'<button class="btn" data-act="newgame">Play again</button>':'<div class="hint">Your captain can start a new race.</div>'}
+      </div></div>`;
+  }
+
+  let head=`<div class="turnhead"><div class="h">${escapeHtml(rN)}<small>Seat ${rL} · it’s their roll</small></div>`;
+  if(state.square){ head+=`<span class="squareno">Square ${state.square}</span>`; }
+  head+=`</div>`;
+
+  if(state.phase==='roll'){
+    let body;
+    if(isMine){
+      body=`<div class="dietray">${dieHTML(state.roll)}
+        <div style="flex:1"><button class="btn" data-act="roll">Roll the die</button>
+        <div class="dieinfo" style="margin-top:8px">You’re on <b>${posName(state.positions[roller])}</b>.</div></div></div>`;
+    } else {
+      body=`<div class="dietray">${dieHTML(state.roll)}
+        <div class="waiting"><span class="pulse"></span> Waiting for <b>&nbsp;${escapeHtml(rN)}&nbsp;</b> to roll…</div></div>`;
+    }
+    return `<div class="card">${head}${body}</div>`;
+  }
+
+  if(state.phase==='action'){
+    const sq=SQUARES[state.square];
+    const dest=state.move?state.move.to:state.positions[roller];
+    return `<div class="card">${head}
+      <div class="dieinfo" style="margin:6px 0 2px">Rolled a <b>${state.roll}</b> → landed on square ${state.square}.</div>
+      <div class="actionbox"><span class="ico">${sq.ico}</span>
+        <div><strong style="color:var(--ink)">${sq.lab}.</strong>
+        <div class="dieinfo">${escapeHtml(rN)} moves to <b>${posName(dest)}</b>. No question on action squares.</div></div></div>
+      ${nextBtn(state)}</div>`;
+  }
+
+  // converse
+  const sq = state.square ? SQUARES[state.square] : null;
+  let qbox;
+  if(sq && sq.t==='free'){
+    qbox=`<div class="qbox"><div class="qlabel">Free question · square ${state.square}</div>
+      <div>Make up your own question about the future.</div></div>`;
+  } else {
+    qbox=`<div class="qbox"><div class="qlabel">Square ${state.square}</div><div>${sq?sq.h:''}</div></div>`;
+  }
+  const script=`
+    <div class="line"><span class="who ${qL}">${qL}</span><span class="say">
+      <b style="color:var(--ink)">${escapeHtml(qN)}</b>, ask <b style="color:var(--ink)">${escapeHtml(rN)}</b> ${sq&&sq.t==='free'?'your own future question.':'the question above.'}</span></div>
+    <div class="line"><span class="who ${rL}">${rL}</span><span class="say">
+      <b style="color:var(--ink)">${escapeHtml(rN)}</b> answers — and adds one extra piece of information.</span></div>
+    <div class="line"><span class="who ${fL}">${fL}</span><span class="say">
+      <b style="color:var(--ink)">${escapeHtml(fN)}</b> asks <b style="color:var(--ink)">${escapeHtml(rN)}</b> a follow-up question.</span></div>`;
+  return `<div class="card">${head}
+      <div class="dieinfo" style="margin:4px 0 0">Rolled a <b>${state.roll}</b>.</div>
+      ${qbox}
+      <div style="padding:2px 0">${script}</div>
+      ${nextBtn(state)}</div>`;
+}
+function nextBtn(state){
+  // anyone can advance to keep play moving, but highlight for the roller
+  return `<button class="btn ${state.turn===G.me?'':'ghost'}" data-act="endturn" style="margin-top:8px">Done — next player’s turn</button>`;
+}
+
+function posName(p){ if(p===START) return 'Start'; if(p===FINISH) return 'Finish'; return 'square '+p; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function playersPanel(state){
+  let chips='';
+  for(let seat=0;seat<3;seat++){
+    const p=playerBySeat(state,seat); const L=SEAT_LETTER[seat];
+    const isTurn = state.started && state.phase!=='done' && state.turn===seat;
+    const youTag = seat===G.me?' (you)':'';
+    if(p){
+      chips+=`<div class="pchip${isTurn?' turn':''}"><span class="dot ${L}">${L}</span>${escapeHtml(p.name)}${youTag}</div>`;
+    } else {
+      chips+=`<div class="pchip empty"><span class="dot ${L}">${L}</span>waiting…</div>`;
+    }
+  }
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="you-tag">You are <b style="color:var(--ink)">${escapeHtml(nameOf(state,G.me))}</b> · Seat ${SEAT_LETTER[G.me]}</div>
+      <button class="btn ghost small" data-act="leave">Leave</button>
+    </div>
+    <div class="pchips">${chips}</div>
+  </div>`;
+}
+
+function renderGame(){
+  const s=G.state; if(!s){ renderLobby(); return; }
+
+  // not started yet — lobby / waiting room
+  if(!s.started){
+    const full=s.players.length>=3;
+    app.innerHTML = `
+      ${playersPanel(s)}
+      <div class="card">
+        <div class="l" style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-dim)">Share this code</div>
+        <div class="codebadge"><span class="c">${s.code}</span>
+          <button class="btn ghost small" data-act="copy">Copy</button></div>
+        <div class="hint">${full?'Everyone’s here.':'Waiting for '+(3-s.players.length)+' more student'+((3-s.players.length)===1?'':'s')+' to join…'}</div>
+        ${ G.me===0
+            ? `<div style="height:12px"></div><button class="btn" data-act="start" ${full?'':'disabled'}>Start the race</button>
+               ${full?'':'<div class="hint">The button turns on once all three of you have joined.</div>'}`
+            : `<div class="hint">Your captain will start the race once all three of you are in.</div>` }
+      </div>
+      ${refBlock()}
+      <div class="footnote">Tip: turn-taking goes clockwise. The person to the roller’s right asks the question; the person to their left asks a follow-up.</div>
+    `;
+    return;
+  }
+
+  // active game
+  app.innerHTML = `
+    ${playersPanel(s)}
+    ${turnPanel(s)}
+    ${refBlock()}
+    <div class="card">
+      ${buildBoard(s)}
+      <div class="legend">
+        <span><span class="g">💬</span>question</span>
+        <span style="color:var(--pC)">↑ / ↓ move</span>
+        <span style="color:var(--good)">? free question</span>
+        <span style="color:var(--ink-soft)">· tap a square to read it</span>
+      </div>
+    </div>
+    <div class="footnote">Game code <b style="color:var(--ink)">${s.code}</b> · progress is saved automatically — scrolling or reopening won’t reset your game.</div>
+  `;
+}
+
+function refBlock(){
+  return `<details class="ref">
+    <summary><span>Example — how one square works</span><span class="chev">›</span></summary>
+    <div class="script">
+      <div class="line"><span class="who A">A</span><span class="say q">“<b>Are</b> you <b>meeting</b> anyone after class?”</span></div>
+      <div class="line"><span class="who B">B</span><span class="say">“Yeah, I<b>’m meeting</b> my friend Aya. We<b>’re having</b> lunch together in Sumiyoshi.”</span></div>
+      <div class="line"><span class="who C">C</span><span class="say q">“Where <b>are</b> you <b>going to have</b> lunch?”</span></div>
+      <div class="line"><span class="who B">B</span><span class="say">“We don’t know yet. We <b>might have</b> lunch at Taj because Aya loves Indian food.”</span></div>
+    </div>
+  </details>`;
+}
+
+/* ============================================================
+   ROUTER + POLLING
+   ============================================================ */
+function render(){
+  if(!G.code){ renderLobby(); }
+  else { renderGame(); }
+}
+
+async function pullAndRender(force){
+  if(!G.code) return;
+  const s=await loadGame(G.code);
+  if(!s) return;
+  const j=JSON.stringify(s);
+  if(force || j!==G.lastJson){
+    // don't clobber a die mid-roll
+    if(G.rolling) return;
+    G.state=s; G.lastJson=j;
+    render();
+  }
+}
+
+setInterval(()=>{ pullAndRender(false); }, 1500);
+
+/* ============================================================
+   EVENT DELEGATION
+   ============================================================ */
+document.addEventListener('click', async (e)=>{
+  // tap a board square to read its question
+  const cellEl=e.target.closest('.cell[data-pos]');
+  if(cellEl){
+    const pos=+cellEl.getAttribute('data-pos'); const sq=SQUARES[pos];
+    const lbl=document.getElementById('qmodal-l'); const txt=document.getElementById('qmodal-t');
+    if(sq && sq.t==='free'){ lbl.textContent='Square '+pos+' · free question'; txt.innerHTML='Make up your own question about the future.'; }
+    else if(sq){ lbl.textContent='Square '+pos; txt.innerHTML=sq.h; }
+    document.getElementById('qmodal').classList.add('show');
+    return;
+  }
+  const t=e.target.closest('[data-act]');
+  if(!t){
+    if(e.target.id==='qmodal'){ document.getElementById('qmodal').classList.remove('show'); }
+    return;
+  }
+  const act=t.getAttribute('data-act');
+  if(act==='closeq'){ document.getElementById('qmodal').classList.remove('show'); return; }
+  if(act==='mode'){ G.joinMode=t.getAttribute('data-v'); renderLobby(); return; }
+  if(act==='create'){ await doCreate(); return; }
+  if(act==='join'){ await doJoin(); return; }
+  if(act==='start'){ await startGame(); return; }
+  if(act==='roll'){ await rollDie(); return; }
+  if(act==='endturn'){ await endTurn(); return; }
+  if(act==='newgame'){ await newGame(); return; }
+  if(act==='leave'){ leaveGame(); return; }
+  if(act==='copy'){
+    try{ await navigator.clipboard.writeText(G.code); toast('Code copied'); }
+    catch(_){ toast('Code: '+G.code); }
+    return;
+  }
+});
+
+/* ============================================================
+   BOOT — try to rejoin any recent game on this device
+   ============================================================ */
+(async function boot(){
+  render();
+})();
+</script>
