@@ -276,7 +276,7 @@ async function saveGame(state){
 /* ============================================================
    APP STATE
    ============================================================ */
-const G = { code:null, me:null, state:null, lastJson:'', rolling:false, joinMode:'create' };
+const G = { code:null, me:null, state:null, lastJson:'', rolling:false, joinMode:'create', local:false };
 const app = document.getElementById('app');
 const toastEl = document.getElementById('toast');
 let toastT;
@@ -297,41 +297,52 @@ function nameOf(state,seat){ const p=playerBySeat(state,seat); return p?p.name:(
    ============================================================ */
 function renderLobby(){
   const m=G.joinMode;
+  const storeWarn = hasStore ? '' :
+    '<div class="hint" style="color:#ffc08a">Note: shared codes only sync once this app is published and each phone opens that shared link. To play right now, use <b style="color:#ffc08a">One device</b> mode.</div>';
   app.innerHTML = `
-  <details class="ref" open>
-    <summary><span>Example — how one square works</span><span class="chev">›</span></summary>
-    <div class="script">
-      <div class="line"><span class="who A">A</span><span class="say q">“<b>Are</b> you <b>meeting</b> anyone after class?”</span></div>
-      <div class="line"><span class="who B">B</span><span class="say">“Yeah, I<b>’m meeting</b> my friend Aya. We<b>’re having</b> lunch together in Sumiyoshi.”</span></div>
-      <div class="line"><span class="who C">C</span><span class="say q">“Where <b>are</b> you <b>going to have</b> lunch?”</span></div>
-      <div class="line"><span class="who B">B</span><span class="say">“We don’t know yet. We <b>might have</b> lunch at Taj because Aya loves Indian food.”</span></div>
-    </div>
-  </details>
+  ${refBlock(true)}
 
   <div class="card" style="margin-top:14px">
     <div class="seg">
-      <button data-act="mode" data-v="create" class="${m==='create'?'on':''}">Start a game</button>
-      <button data-act="mode" data-v="join" class="${m==='join'?'on':''}">Join a game</button>
+      <button data-act="mode" data-v="create" class="${m==='create'?'on':''}">Start (code)</button>
+      <button data-act="mode" data-v="join" class="${m==='join'?'on':''}">Join (code)</button>
+      <button data-act="mode" data-v="local" class="${m==='local'?'on':''}">One device</button>
     </div>
     ${ m==='create' ? `
+      <div class="hint" style="margin:0 0 12px">For one captain. You’ll get a code; your two teammates join from their own phones.</div>
       <label class="lbl">Captain — your name</label>
       <input id="cname" class="field" placeholder="e.g. Kenji" autocomplete="off" maxlength="14">
       <div style="height:12px"></div>
       <button class="btn" data-act="create">Create game &amp; get a code</button>
-      <div class="hint">You’ll get a 4-letter code. Share it with the other two students so all three of you join the same game.</div>
-    ` : `
+      <div class="hint">Everyone needs to open the <b>same shared app link</b> first, then your teammates tap <b>Join (code)</b> and enter your code.</div>
+      ${storeWarn}
+    ` : m==='join' ? `
+      <div class="hint" style="margin:0 0 12px">Got a code from your captain? Join here.</div>
       <label class="lbl">Game code</label>
-      <input id="jcode" class="field code" placeholder="••••" maxlength="4" autocomplete="off">
+      <input id="jcode" class="field code" placeholder="••••" maxlength="4" autocomplete="off" autocapitalize="characters">
       <div style="height:10px"></div>
       <label class="lbl">Your name</label>
       <input id="jname" class="field" placeholder="e.g. Aya" autocomplete="off" maxlength="14">
       <div style="height:12px"></div>
       <button class="btn" data-act="join">Join game</button>
-      <div class="hint">Ask your team captain for the code.</div>
+      <div class="hint">Use your own name so the game can tell the three of you apart.</div>
+      ${storeWarn}
+    ` : `
+      <div class="hint" style="margin:0 0 12px">No separate phones? Three students share one phone and pass it around each turn.</div>
+      <label class="lbl">Student A</label>
+      <input id="n0" class="field" placeholder="e.g. Kenji" maxlength="14" autocomplete="off">
+      <div style="height:8px"></div>
+      <label class="lbl">Student B</label>
+      <input id="n1" class="field" placeholder="e.g. Aya" maxlength="14" autocomplete="off">
+      <div style="height:8px"></div>
+      <label class="lbl">Student C</label>
+      <input id="n2" class="field" placeholder="e.g. Sora" maxlength="14" autocomplete="off">
+      <div style="height:12px"></div>
+      <button class="btn" data-act="createlocal">Start the race</button>
     `}
     <div class="err" id="lerr"></div>
   </div>
-  <div class="footnote">Groups of three · play several games at once, each with its own code.</div>
+  <div class="footnote">Groups of three · future-tenses speaking practice.</div>
   `;
 }
 
@@ -349,6 +360,7 @@ async function doCreate(){
   await saveGame(state);
   G.code=code; G.me=0; G.state=state; G.lastJson=JSON.stringify(state);
   await sSet(meKey(code),'0',false);
+  await sSet('rttt-last', JSON.stringify({code,seat:0}), false);
   render();
 }
 
@@ -358,37 +370,71 @@ async function doJoin(){
   const err=document.getElementById('lerr');
   if(code.length!==4){ err.textContent='Enter the 4-letter code.'; return; }
   if(!name){ err.textContent='Please type your name.'; return; }
-  let state=await loadGame(code);
-  if(!state){ err.textContent='No game found with that code. Check with your captain.'; return; }
-  // already in this game (same name)?
-  let mine=(state.players||[]).find(p=>p.name.toLowerCase()===name.toLowerCase());
-  if(!mine){
+  err.textContent='Joining…';
+  const lc=name.toLowerCase();
+  let seat=null;
+  // Retry loop: shared storage is last-write-wins, so two students joining at the
+  // same instant can overwrite each other. We claim a seat, then verify it stuck;
+  // if our write was lost, we re-read the (now-updated) roster and try again.
+  for(let attempt=0; attempt<6; attempt++){
+    const state=await loadGame(code);
+    if(!state){ err.textContent='No game found with that code. Check it with your captain.'; return; }
+    const existing=(state.players||[]).find(p=>p.name.toLowerCase()===lc);
+    if(existing){ seat=existing.seat; break; }
     if((state.players||[]).length>=3){ err.textContent='That game already has three players.'; return; }
-    const seat=state.players.length;
-    state.players.push({seat,name});
+    const used=new Set(state.players.map(p=>p.seat));
+    let target=0; while(used.has(target)) target++;
+    state.players.push({seat:target,name});
     await saveGame(state);
-    state=await loadGame(code); // re-read to settle
-    mine=(state.players||[]).find(p=>p.name.toLowerCase()===name.toLowerCase());
-    if(!mine){ err.textContent='Could not join — please try again.'; return; }
+    await new Promise(r=>setTimeout(r,140+Math.random()*220)); // desync from rivals
+    const check=await loadGame(code);
+    const got=(check && check.players||[]).find(p=>p.name.toLowerCase()===lc);
+    if(got){ seat=got.seat; break; }
+    // our write was overwritten — loop and try again on the fresh roster
   }
-  G.code=code; G.me=mine.seat; G.state=state; G.lastJson=JSON.stringify(state);
-  await sSet(meKey(code),String(mine.seat),false);
+  if(seat===null){ err.textContent='Couldn’t join — please try once more.'; return; }
+  const state=await loadGame(code);
+  G.local=false; G.code=code; G.me=seat; G.state=state; G.lastJson=JSON.stringify(state);
+  await sSet(meKey(code),String(seat),false);
+  await sSet('rttt-last', JSON.stringify({code,seat}), false);
   render();
 }
 
 /* ============================================================
-   GAME ACTIONS
+   GAME ACTIONS  (work for both one-device and code modes)
    ============================================================ */
+async function loadCur(){ return G.local ? G.state : await loadGame(G.code); }
+async function saveCur(s){
+  s.v=(s.v||0)+1;
+  if(G.local){ G.state=s; G.lastJson=JSON.stringify(s); await sSet('rttt-local',JSON.stringify(s),false); }
+  else { await sSet(gameKey(s.code), JSON.stringify(s), true); }
+}
+function refresh(){ if(G.local){ render(); } else { pullAndRender(true); } }
+
+async function doCreateLocal(){
+  const names=[0,1,2].map(i=>(document.getElementById('n'+i).value||'').trim());
+  const err=document.getElementById('lerr');
+  if(names.some(n=>!n)){ err.textContent='Please enter all three names.'; return; }
+  const state={ code:'LOCAL', local:true,
+    players:names.map((name,seat)=>({seat,name})),
+    started:true, positions:[START,START,START], turn:0, phase:'roll',
+    roll:null, square:null, move:null, winner:null, v:0 };
+  G.local=true; G.code='LOCAL'; G.me=null; G.state=state; G.lastJson=JSON.stringify(state);
+  await sSet('rttt-local', JSON.stringify(state), false);
+  render();
+}
+
 async function startGame(){
   let s=await loadGame(G.code); if(!s) return;
   if(s.players.length<3){ toast('Need all three players first.'); return; }
   s.started=true; s.phase='roll'; s.turn=0; s.roll=null; s.square=null; s.move=null;
-  await saveGame(s); pullAndRender(true);
+  await saveCur(s); refresh();
 }
 
 async function rollDie(){
   if(G.rolling) return;
-  let s=await loadGame(G.code); if(!s||s.phase!=='roll'||s.turn!==G.me) return;
+  let s=await loadCur(); if(!s||s.phase!=='roll') return;
+  if(!G.local && s.turn!==G.me) return;
   G.rolling=true;
   const n=1+Math.floor(Math.random()*6);
   // animate locally
@@ -411,27 +457,30 @@ async function rollDie(){
       s.positions[seat]=to; s.phase='converse'; s.roll=n; s.square=to; s.move={from,to};
     }
   }
-  await saveGame(s);
+  await saveCur(s);
   G.rolling=false;
-  pullAndRender(true);
+  refresh();
 }
 
 async function endTurn(){
-  let s=await loadGame(G.code); if(!s) return;
+  let s=await loadCur(); if(!s) return;
   if(s.phase!=='converse' && s.phase!=='action') return;
+  if(!G.local && s.turn!==G.me) return; // only the roller ends their own turn
   s.turn=(s.turn+1)%3; s.phase='roll'; s.roll=null; s.square=null; s.move=null;
-  await saveGame(s); pullAndRender(true);
+  await saveCur(s); refresh();
 }
 
 async function newGame(){
-  let s=await loadGame(G.code); if(!s) return;
+  let s=await loadCur(); if(!s) return;
   s.positions=[START,START,START]; s.turn=0; s.phase='roll';
   s.roll=null; s.square=null; s.move=null; s.winner=null;
-  await saveGame(s); pullAndRender(true);
+  await saveCur(s); refresh();
 }
 
 function leaveGame(){
-  G.code=null; G.me=null; G.state=null; G.lastJson='';
+  if(G.local){ sSet('rttt-local','',false); }
+  sSet('rttt-last','',false);
+  G.code=null; G.me=null; G.state=null; G.lastJson=''; G.local=false;
   render();
 }
 
@@ -490,14 +539,14 @@ function turnPanel(state){
   const {roller,questioner,follower}=rolesFor(state.turn);
   const rN=nameOf(state,roller), qN=nameOf(state,questioner), fN=nameOf(state,follower);
   const rL=SEAT_LETTER[roller], qL=SEAT_LETTER[questioner], fL=SEAT_LETTER[follower];
-  const isMine = state.turn===G.me;
+  const isMine = G.local || state.turn===G.me;
 
   if(state.phase==='done'){
     const w=nameOf(state,state.winner);
     return `<div class="card"><div class="winbanner">
         <div class="big">🏔️ ${escapeHtml(w)} reached the top!</div>
         <p style="color:var(--ink-soft);margin:8px 0 16px">Race complete. Well played, all three of you.</p>
-        ${G.me===0?'<button class="btn" data-act="newgame">Play again</button>':'<div class="hint">Your captain can start a new race.</div>'}
+        ${(G.local||G.me===0)?'<button class="btn" data-act="newgame">Play again</button>':'<div class="hint">Your captain can start a new race.</div>'}
       </div></div>`;
   }
 
@@ -508,9 +557,12 @@ function turnPanel(state){
   if(state.phase==='roll'){
     let body;
     if(isMine){
+      const cue = G.local
+        ? `Pass the phone to <b>${escapeHtml(rN)}</b> (Seat ${rL}), then roll.`
+        : `You’re on <b>${posName(state.positions[roller])}</b>.`;
       body=`<div class="dietray">${dieHTML(state.roll)}
-        <div style="flex:1"><button class="btn" data-act="roll">Roll the die</button>
-        <div class="dieinfo" style="margin-top:8px">You’re on <b>${posName(state.positions[roller])}</b>.</div></div></div>`;
+        <div style="flex:1"><button class="btn" data-act="roll">${G.local?escapeHtml(rN)+' rolls':'Roll the die'}</button>
+        <div class="dieinfo" style="margin-top:8px">${cue}</div></div></div>`;
     } else {
       body=`<div class="dietray">${dieHTML(state.roll)}
         <div class="waiting"><span class="pulse"></span> Waiting for <b>&nbsp;${escapeHtml(rN)}&nbsp;</b> to roll…</div></div>`;
@@ -552,8 +604,11 @@ function turnPanel(state){
       ${nextBtn(state)}</div>`;
 }
 function nextBtn(state){
-  // anyone can advance to keep play moving, but highlight for the roller
-  return `<button class="btn ${state.turn===G.me?'':'ghost'}" data-act="endturn" style="margin-top:8px">Done — next player’s turn</button>`;
+  const controls = G.local || state.turn===G.me;
+  if(!controls){
+    return `<div class="waiting" style="margin-top:10px"><span class="pulse"></span> Waiting for <b>&nbsp;${escapeHtml(nameOf(state,state.turn))}&nbsp;</b> to finish their turn…</div>`;
+  }
+  return `<button class="btn" data-act="endturn" style="margin-top:8px">Done — next player’s turn</button>`;
 }
 
 function posName(p){ if(p===START) return 'Start'; if(p===FINISH) return 'Finish'; return 'square '+p; }
@@ -571,9 +626,12 @@ function playersPanel(state){
       chips+=`<div class="pchip empty"><span class="dot ${L}">${L}</span>waiting…</div>`;
     }
   }
+  const ident = G.local
+    ? 'One device · pass-and-play'
+    : 'You are <b style="color:var(--ink)">'+escapeHtml(nameOf(state,G.me))+'</b> · Seat '+SEAT_LETTER[G.me];
   return `<div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div class="you-tag">You are <b style="color:var(--ink)">${escapeHtml(nameOf(state,G.me))}</b> · Seat ${SEAT_LETTER[G.me]}</div>
+      <div class="you-tag">${ident}</div>
       <button class="btn ghost small" data-act="leave">Leave</button>
     </div>
     <div class="pchips">${chips}</div>
@@ -592,9 +650,10 @@ function renderGame(){
         <div class="l" style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-dim)">Share this code</div>
         <div class="codebadge"><span class="c">${s.code}</span>
           <button class="btn ghost small" data-act="copy">Copy</button></div>
-        <div class="hint">${full?'Everyone’s here.':'Waiting for '+(3-s.players.length)+' more student'+((3-s.players.length)===1?'':'s')+' to join…'}</div>
+        <div class="hint">${full?'Everyone’s here — start when ready.':'Waiting for '+(3-s.players.length)+' more student'+((3-s.players.length)===1?'':'s')+' to join.'}</div>
         ${ G.me===0
-            ? `<div style="height:12px"></div><button class="btn" data-act="start" ${full?'':'disabled'}>Start the race</button>
+            ? `<div class="hint" style="margin-top:6px">Your two teammates open the <b>same shared app link</b> on their phones, tap <b>Join (code)</b>, and enter <b>${s.code}</b>.</div>
+               <div style="height:12px"></div><button class="btn" data-act="start" ${full?'':'disabled'}>Start the race</button>
                ${full?'':'<div class="hint">The button turns on once all three of you have joined.</div>'}`
             : `<div class="hint">Your captain will start the race once all three of you are in.</div>` }
       </div>
@@ -622,8 +681,8 @@ function renderGame(){
   `;
 }
 
-function refBlock(){
-  return `<details class="ref">
+function refBlock(open){
+  return `<details class="ref"${open?' open':''}>
     <summary><span>Example — how one square works</span><span class="chev">›</span></summary>
     <div class="script">
       <div class="line"><span class="who A">A</span><span class="say q">“<b>Are</b> you <b>meeting</b> anyone after class?”</span></div>
@@ -643,7 +702,7 @@ function render(){
 }
 
 async function pullAndRender(force){
-  if(!G.code) return;
+  if(!G.code || G.local) return;
   const s=await loadGame(G.code);
   if(!s) return;
   const j=JSON.stringify(s);
@@ -655,7 +714,14 @@ async function pullAndRender(force){
   }
 }
 
-setInterval(()=>{ pullAndRender(false); }, 1500);
+setInterval(()=>{ pullAndRender(false); }, 2000);
+
+/* live-uppercase the code field as it is typed */
+document.addEventListener('input', (e)=>{
+  if(e.target && e.target.id==='jcode'){
+    const v=e.target.value.toUpperCase(); if(v!==e.target.value) e.target.value=v;
+  }
+});
 
 /* ============================================================
    EVENT DELEGATION
@@ -680,6 +746,7 @@ document.addEventListener('click', async (e)=>{
   if(act==='closeq'){ document.getElementById('qmodal').classList.remove('show'); return; }
   if(act==='mode'){ G.joinMode=t.getAttribute('data-v'); renderLobby(); return; }
   if(act==='create'){ await doCreate(); return; }
+  if(act==='createlocal'){ await doCreateLocal(); return; }
   if(act==='join'){ await doJoin(); return; }
   if(act==='start'){ await startGame(); return; }
   if(act==='roll'){ await rollDie(); return; }
@@ -694,9 +761,33 @@ document.addEventListener('click', async (e)=>{
 });
 
 /* ============================================================
-   BOOT — try to rejoin any recent game on this device
+   BOOT — resume an in-progress game on this device so a locked
+   screen, reload, or scroll never drops a student out
    ============================================================ */
 (async function boot(){
+  // 1) one-device game?
+  try{
+    const r=await sGet('rttt-local', false);
+    if(r && r.value){
+      const s=JSON.parse(r.value);
+      if(s && s.started){
+        G.local=true; G.code='LOCAL'; G.state=s; G.lastJson=JSON.stringify(s);
+        render(); return;
+      }
+    }
+  }catch(e){}
+  // 2) shared code game this phone already joined?
+  try{
+    const r=await sGet('rttt-last', false);
+    if(r && r.value){
+      const {code,seat}=JSON.parse(r.value);
+      const s=await loadGame(code);
+      if(s && (s.players||[]).some(p=>p.seat===seat)){
+        G.local=false; G.code=code; G.me=seat; G.state=s; G.lastJson=JSON.stringify(s);
+        render(); return;
+      }
+    }
+  }catch(e){}
   render();
 })();
 </script>
