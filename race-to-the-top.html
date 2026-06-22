@@ -3,7 +3,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <style>
   :root{
     --bg-0:#0c0a26; --bg-1:#15123f; --bg-2:#221a55;
@@ -257,146 +258,62 @@ const START=0, FINISH=35;
 const SEAT_LETTER=['A','B','C'];
 
 /* ============================================================
-   ONLINE PLAY — zero setup.
-   Phones connect peer-to-peer with PeerJS over a free public
-   connector. The captain's phone is the "host" and holds the
-   game; the other two are "clients". No accounts, no config.
+   ONLINE PLAY — Firebase Realtime Database (same project that
+   already runs the "How Often Do You...?" game on GitHub Pages).
+   No setup needed; the config is filled in. Games live under a
+   separate "rttt/" path so they never collide with other games.
    One-device mode + resume use the browser's localStorage.
    ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBrsLESE52ZBtE6iXPyO-DU3UstKfcxX48",
+  authDomain: "frequency-adverbs.firebaseapp.com",
+  databaseURL: "https://frequency-adverbs-default-rtdb.firebaseio.com",
+  projectId: "frequency-adverbs",
+  storageBucket: "frequency-adverbs.firebasestorage.app",
+  messagingSenderId: "8272563124",
+  appId: "1:8272563124:web:537beb3582b7a36ef4c0e1",
+  measurementId: "G-D7W5WDM9R6"
+};
+let db=null, ONLINE_OK=false;
+try{ firebase.initializeApp(firebaseConfig); db=firebase.database(); ONLINE_OK=true; }
+catch(e){ console.error('Firebase init failed:', e); }
+
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
 const clone = s => JSON.parse(JSON.stringify(s));
 
-const PEER_PREFIX='rtttop25-';                 // namespaced so codes don't clash with other apps
-const peerId = code => PEER_PREFIX+code;
-const ONLINE_OK = (typeof Peer!=='undefined');
+function gameRef(code){ return db.ref('rttt/'+code); }
 
-function cleanupPeer(){
-  try{ if(G.peer) G.peer.destroy(); }catch(e){}
-  G.peer=null; G.hostConn=null; G.conns=[];
-}
-
-/* ---- HOST (captain) ---- */
-function startHosting(code, name, resumeState){
-  cleanupPeer();
-  G.role='host'; G.local=false; G.code=code; G.me=0; G.myName=name;
-  G.state = resumeState || newGameState(code, name);
-  G.conns=[]; G.connected=false; G.connecting=null;
-  render();
-  try{ G.peer=new Peer(peerId(code)); }
-  catch(e){ G.joinError='This browser can’t run online play. Use One device.'; G.role=null; G.code=null; renderLobby(); return; }
-  G.peer.on('open', ()=>{ G.connected=true; persistSession(); render(); });
-  G.peer.on('connection', conn=>{
-    conn.on('data', msg=>hostHandle(conn,msg));
-    conn.on('close', ()=>{ const e=(G.conns||[]).find(c=>c.conn===conn); if(e) e.online=false; render(); });
-    conn.on('error', ()=>{});
-  });
-  G.peer.on('error', err=>{
-    const t=err&&err.type;
-    if(t==='unavailable-id'){ startHosting(genCode(), name, G.state); }     // code taken globally — pick another
-    else if(t==='browser-incompatible'){ G.joinError='This browser can’t run online play. Use One device.'; leaveGame(); }
-    else { G.connected=false; render(); }
-  });
-}
-function hostHandle(conn,msg){
-  if(!msg||!msg.t) return;
-  if(msg.t==='join'){
-    const name=(msg.name||'').trim(); const lc=name.toLowerCase();
-    let entry=(G.conns||[]).find(c=>c.name && c.name.toLowerCase()===lc);
-    let seat;
-    if(entry){ seat=entry.seat; entry.conn=conn; entry.online=true; }
-    else {
-      if((G.state.players||[]).length>=3){ try{conn.send({t:'full'});}catch(e){} return; }
-      const used=new Set(G.state.players.map(p=>p.seat));
-      seat=0; while(used.has(seat)) seat++;
-      G.state.players.push({seat,name});
-      G.conns.push({conn,seat,name,online:true});
-    }
-    try{ conn.send({t:'joined', seat, state:G.state}); }catch(e){}
-    persistSession(); broadcast(); render();
-  } else if(msg.t==='action'){
-    hostApplyAction(msg);
+// Firebase returns arrays as objects when sparse — normalise back to arrays.
+function norm(s){
+  if(!s) return s;
+  if(s.players && !Array.isArray(s.players)) s.players=Object.values(s.players);
+  if(!s.players) s.players=[];
+  if(s.positions && !Array.isArray(s.positions)){
+    s.positions=Object.keys(s.positions).sort((a,b)=>a-b).map(k=>s.positions[k]);
   }
-}
-function hostApplyAction(msg){
-  const s=G.state; if(!s) return;
-  if(msg.action==='roll'){
-    if(s.phase!=='roll'||s.turn!==msg.by) return;
-    applyRoll(s, msg.n);
-  } else if(msg.action==='endturn'){
-    if((s.phase!=='converse'&&s.phase!=='action')||s.turn!==msg.by) return;
-    s.turn=(s.turn+1)%3; s.phase='roll'; s.roll=null; s.square=null; s.move=null;
-  } else if(msg.action==='newgame'){
-    s.positions=[START,START,START]; s.turn=0; s.phase='roll';
-    s.roll=null; s.square=null; s.move=null; s.winner=null;
-  }
-  persistSession(); broadcast(); render();
-}
-function broadcast(){
-  if(G.role!=='host') return;
-  const msg={t:'state', state:G.state};
-  (G.conns||[]).forEach(c=>{ try{ if(c.conn && c.conn.open) c.conn.send(msg); }catch(e){} });
+  if(!s.positions) s.positions=[START,START,START];
+  return s;
 }
 
-/* ---- CLIENT (other students) ---- */
-function joinAsClient(code, name){
-  const reconnect = !!G.state && G.code===code;
-  cleanupPeer();
-  G.role='client'; G.local=false; G.code=code; G.myName=name;
-  if(!reconnect){ G.me=null; G.state=null; G.connecting={code}; }
-  G.connected=false;
-  render();
-  let opened=false;
-  try{ G.peer=new Peer(); }
-  catch(e){ failJoin('This browser can’t run online play. Use One device.'); return; }
-  const timeout=setTimeout(()=>{ if(!opened){ failJoin('Couldn’t reach that game. Check the code, and make sure your captain still has the game open on the same Wi-Fi.'); } }, 10000);
-  G.peer.on('open', ()=>{
-    const conn=G.peer.connect(peerId(code), {reliable:true});
-    G.hostConn=conn;
-    conn.on('open', ()=>{ opened=true; clearTimeout(timeout); try{conn.send({t:'join',name});}catch(e){} });
-    conn.on('data', msg=>clientHandle(msg));
-    conn.on('close', ()=>{ G.connected=false; render(); scheduleReconnect(); });
-    conn.on('error', ()=>{});
-  });
-  G.peer.on('error', err=>{
-    const t=err&&err.type;
-    if(t==='peer-unavailable'){ clearTimeout(timeout); failJoin('No game found with that code. Double-check it with your captain.'); }
-    else if(t==='browser-incompatible'){ clearTimeout(timeout); failJoin('This browser can’t run online play. Use One device.'); }
-    // transient network errors fall through to the timeout
+function subscribe(code){
+  unsubscribe();
+  G.ref=gameRef(code);
+  G.cb=G.ref.on('value', snap=>{
+    const s=norm(snap.val());
+    if(!s) return;
+    G.state=s;
+    if(!G.rolling) render();
   });
 }
-function clientHandle(msg){
-  if(!msg||!msg.t) return;
-  if(msg.t==='joined'){ G.me=msg.seat; G.state=msg.state; G.connected=true; G.connecting=null; persistSession(); render(); }
-  else if(msg.t==='state'){ G.state=msg.state; G.connected=true; if(!G.rolling) render(); }
-  else if(msg.t==='full'){ failJoin('That game already has three players.'); }
-}
-function failJoin(text){
-  cleanupPeer();
-  G.role=null; G.code=null; G.state=null; G.connecting=null; G.me=null;
-  G.joinError=text; G.joinMode='join';
-  renderLobby();
-}
-function scheduleReconnect(){
-  if(G.role!=='client' || !G.code) return;
-  setTimeout(()=>{ if(G.role==='client' && G.code && !G.connected){ joinAsClient(G.code, G.myName); } }, 2500);
-}
-function sendAction(a){ try{ if(G.hostConn && G.hostConn.open) G.hostConn.send({t:'action', ...a}); }catch(e){} }
-
-/* ---- session persistence (resume after reload / screen-lock) ---- */
-function persistSession(){
-  try{
-    if(G.role==='host') lsSet('rttt-session', JSON.stringify({role:'host', code:G.code, name:G.myName, state:G.state}));
-    else if(G.role==='client') lsSet('rttt-session', JSON.stringify({role:'client', code:G.code, name:G.myName}));
-  }catch(e){}
-}
+function unsubscribe(){ if(G.ref&&G.cb){ try{ G.ref.off('value',G.cb); }catch(e){} } G.ref=null; G.cb=null; }
 
 /* ============================================================
    APP STATE
    ============================================================ */
 const G = { code:null, me:null, state:null, rolling:false, joinMode:'create', local:false, role:null,
-            connected:false, connecting:null, peer:null, hostConn:null, conns:[], myName:'', joinError:'' };
+            connected:false, ref:null, cb:null, joinError:'' };
 const app = document.getElementById('app');
 const toastEl = document.getElementById('toast');
 let toastT;
@@ -441,7 +358,7 @@ function renderLobby(){
       <input id="cname" class="field" placeholder="e.g. Kenji" autocomplete="off" maxlength="14">
       <div style="height:12px"></div>
       <button class="btn" data-act="create">Create game &amp; get a code</button>
-      <div class="hint">Your teammates open the same web page, tap <b>Join (code)</b>, and enter your code. Keep your phone’s screen on — it hosts the game.</div>
+      <div class="hint">Your teammates open the same web page, tap <b>Join (code)</b>, and enter your code.</div>
     ` : m==='join' ? `
       <div class="hint" style="margin:0 0 12px">Got a code from your captain? Join here.</div>
       <label class="lbl">Game code</label>
@@ -493,7 +410,22 @@ async function doCreate(){
   const err=document.getElementById('lerr');
   if(!name){ err.textContent='Please type your name first.'; return; }
   if(!ONLINE_OK){ err.textContent='Online play couldn’t load — use One device for now.'; return; }
-  startHosting(genCode(), name, null);
+  err.textContent='Creating…';
+  // pick a code that isn't already a live game
+  let code, tries=0;
+  do { code=genCode(); tries++; } while(false);
+  try{
+    for(let i=0;i<6;i++){
+      const exists=(await gameRef(code).once('value')).exists();
+      if(!exists) break;
+      code=genCode();
+    }
+    await gameRef(code).set(newGameState(code,name));
+  }catch(e){ err.textContent='Couldn’t reach the game server. Check your internet connection and try again.'; return; }
+  G.local=false; G.role='host'; G.code=code; G.me=0;
+  lsSet('rttt-last', JSON.stringify({code,seat:0}));
+  subscribe(code);
+  render();
 }
 
 async function doJoin(){
@@ -503,15 +435,47 @@ async function doJoin(){
   if(code.length!==4){ err.textContent='Enter the 4-letter code.'; return; }
   if(!name){ err.textContent='Please type your name.'; return; }
   if(!ONLINE_OK){ err.textContent='Online play couldn’t load — use One device for now.'; return; }
-  joinAsClient(code, name);
+  err.textContent='Joining…';
+  const lc=name.toLowerCase();
+
+  let exists;
+  try{ exists=(await gameRef(code).once('value')).exists(); }
+  catch(e){ err.textContent='Couldn’t reach the game server. Try again.'; return; }
+  if(!exists){ err.innerHTML='No game found with that code.<br>Check it’s exactly right and that your captain has created it.'; return; }
+
+  let result;
+  try{
+    result=await gameRef(code).transaction(cur=>{
+      if(cur===null) return cur;
+      cur.players=cur.players||[];
+      const ex=cur.players.find(p=>p.name && p.name.toLowerCase()===lc);
+      if(ex) return cur;
+      if(cur.players.length>=3) return cur;
+      const used=new Set(cur.players.map(p=>p.seat));
+      let target=0; while(used.has(target)) target++;
+      cur.players.push({seat:target,name});
+      return cur;
+    });
+  }catch(e){ err.textContent='Couldn’t join — please try again.'; return; }
+
+  const final=norm(result.snapshot ? result.snapshot.val() : null);
+  if(!final){ err.textContent='No game found with that code.'; return; }
+  const mine=(final.players||[]).find(p=>p.name && p.name.toLowerCase()===lc);
+  if(!mine){
+    err.textContent = (final.players||[]).length>=3 ? 'That game already has three players.' : 'Couldn’t join — please try once more.';
+    return;
+  }
+  G.local=false; G.role='client'; G.code=code; G.me=mine.seat; G.state=final;
+  lsSet('rttt-last', JSON.stringify({code,seat:mine.seat}));
+  subscribe(code);
+  render();
 }
 
 /* ============================================================
    GAME ACTIONS
    - One device: mutate local state (saved to localStorage)
-   - Host (captain): mutate the master state, then broadcast
-   - Client: send the action to the host; the host's broadcast
-     updates every phone
+   - Online: run an atomic Firebase transaction; the live
+     subscription re-renders every phone automatically
    ============================================================ */
 function saveLocal(s){ G.state=s; lsSet('rttt-local', JSON.stringify(s)); }
 
@@ -548,11 +512,16 @@ async function doCreateLocal(){
 }
 
 async function startGame(){
-  if(G.role!=='host') return;
-  if((G.state.players||[]).length<3){ toast('Need all three players first.'); return; }
-  const s=G.state;
-  s.started=true; s.phase='roll'; s.turn=0; s.roll=null; s.square=null; s.move=null;
-  persistSession(); broadcast(); render();
+  if(G.local){ return; }
+  if(G.state && (G.state.players||[]).length<3){ toast('Need all three players first.'); return; }
+  await gameRef(G.code).transaction(cur=>{
+    if(!cur) return cur;
+    cur.players=cur.players||[];
+    if(cur.players.length<3) return cur;
+    cur.started=true; cur.phase='roll'; cur.turn=0;
+    cur.roll=null; cur.square=null; cur.move=null;
+    return cur;
+  });
 }
 
 async function rollDie(){
@@ -566,35 +535,39 @@ async function rollDie(){
   await new Promise(r=>setTimeout(r,520));
   G.rolling=false;
   if(G.local){ saveLocal(applyRoll(clone(s),n)); render(); }
-  else if(G.role==='host'){ applyRoll(G.state,n); persistSession(); broadcast(); render(); }
-  else { sendAction({action:'roll', n, by:G.me}); }
+  else {
+    await gameRef(G.code).transaction(cur=>{
+      if(!cur||cur.phase!=='roll'||cur.turn!==G.me) return cur;
+      return applyRoll(cur,n);
+    });
+  }
 }
 
 async function endTurn(){
   const s=G.state; if(!s) return;
   if(s.phase!=='converse' && s.phase!=='action') return;
   if(!G.local && s.turn!==G.me) return;
-  if(G.local){
-    s.turn=(s.turn+1)%3; s.phase='roll'; s.roll=null; s.square=null; s.move=null; saveLocal(s); render();
-  } else if(G.role==='host'){
-    s.turn=(s.turn+1)%3; s.phase='roll'; s.roll=null; s.square=null; s.move=null; persistSession(); broadcast(); render();
-  } else { sendAction({action:'endturn', by:G.me}); }
+  const adv=cur=>{ cur.turn=((cur.turn||0)+1)%3; cur.phase='roll'; cur.roll=null; cur.square=null; cur.move=null; return cur; };
+  if(G.local){ saveLocal(adv(clone(s))); render(); }
+  else { await gameRef(G.code).transaction(cur=>{
+    if(!cur||(cur.phase!=='converse'&&cur.phase!=='action')||cur.turn!==G.me) return cur;
+    return adv(cur);
+  }); }
 }
 
 async function newGame(){
   const reset=cur=>{ cur.positions=[START,START,START]; cur.turn=0; cur.phase='roll';
     cur.roll=null; cur.square=null; cur.move=null; cur.winner=null; return cur; };
-  if(G.local){ saveLocal(reset(G.state)); render(); }
-  else if(G.role==='host'){ reset(G.state); persistSession(); broadcast(); render(); }
-  else { sendAction({action:'newgame', by:G.me}); }
+  if(G.local){ saveLocal(reset(clone(G.state))); render(); }
+  else { await gameRef(G.code).transaction(cur=>{ if(!cur) return cur; return reset(cur); }); }
 }
 
 function leaveGame(){
-  cleanupPeer();
-  lsDel('rttt-session');
-  if(G.local) lsDel('rttt-local');
+  if(G.local){ lsDel('rttt-local'); }
+  else { unsubscribe(); }
+  lsDel('rttt-last');
   G.code=null; G.me=null; G.state=null; G.local=false; G.role=null;
-  G.connecting=null; G.connected=false; G.joinError='';
+  G.connected=false; G.joinError='';
   render();
 }
 
@@ -761,7 +734,7 @@ function renderGame(){
     const liveLine = (G.role==='host')
       ? (G.connected
           ? '<div class="syncline ok" style="margin-top:10px"><span class="d"></span>Code is live — your teammates can join now.</div>'
-          : '<div class="syncline" style="margin-top:10px"><span class="d"></span>Starting up… share the code once this turns green.</div>')
+          : '<div class="syncline" style="margin-top:10px"><span class="d"></span>Connecting…</div>')
       : '';
     app.innerHTML = `
       ${playersPanel(s)}
@@ -874,6 +847,15 @@ document.addEventListener('click', async (e)=>{
    BOOT — resume an in-progress game on this device so a locked
    screen, reload, or scroll never drops a student out.
    ============================================================ */
+if(ONLINE_OK){
+  try{
+    db.ref('.info/connected').on('value', snap=>{
+      G.connected = snap.val()===true;
+      if(!G.rolling) render();
+    });
+  }catch(e){}
+}
+
 (async function boot(){
   render();
   // 1) one-device game in progress?
@@ -882,15 +864,20 @@ document.addEventListener('click', async (e)=>{
     if(loc){ const s=JSON.parse(loc);
       if(s && s.started){ G.local=true; G.role='local'; G.code='LOCAL'; G.state=s; render(); return; } }
   }catch(e){}
-  // 2) online game this phone was in — rejoin / re-host
-  try{
-    const sess=lsGet('rttt-session');
-    if(sess && ONLINE_OK){
-      const o=JSON.parse(sess);
-      if(o.role==='host' && o.code && o.state){ startHosting(o.code, o.name, o.state); return; }
-      if(o.role==='client' && o.code && o.name){ joinAsClient(o.code, o.name); return; }
-    }
-  }catch(e){}
+  // 2) online game this phone already joined?
+  if(ONLINE_OK){
+    try{
+      const last=lsGet('rttt-last');
+      if(last){ const {code,seat}=JSON.parse(last);
+        const snap=await gameRef(code).once('value');
+        const s=norm(snap.val());
+        if(s && (s.players||[]).some(p=>p && p.seat===seat)){
+          G.local=false; G.role=(seat===0?'host':'client'); G.code=code; G.me=seat; G.state=s;
+          subscribe(code); render(); return;
+        }
+      }
+    }catch(e){}
+  }
   render();
 })();
 </script>
