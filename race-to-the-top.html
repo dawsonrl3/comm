@@ -123,7 +123,10 @@
   .actionbox .ico{font-size:24px}
 
   /* ---------- die ---------- */
-  .dietray{display:flex;align-items:center;gap:16px;margin-top:6px}
+  .dietray{display:flex;align-items:center;gap:14px;margin-top:6px}
+  .dicepair{display:flex;gap:8px;flex:0 0 auto}
+  .dicepair .die{width:52px;height:52px;border-radius:12px;padding:8px}
+  .dicepair .die i{width:9px;height:9px}
   .die{width:74px;height:74px;border-radius:18px;background:linear-gradient(150deg,#fff,#dfe3ff);
     box-shadow:0 10px 26px #0006, inset 0 -6px 10px #aab0e055, inset 0 4px 6px #fff;
     display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
@@ -529,16 +532,19 @@ async function rollDie(){
   const s=G.state; if(!s||s.phase!=='roll') return;
   if(!G.local && s.turn!==G.me) return;
   G.rolling=true;
-  const n=1+Math.floor(Math.random()*6);
-  const dieEl=document.querySelector('.die');
-  if(dieEl){ dieEl.classList.add('rolling'); dieEl.setAttribute('data-n',String(n)); }
+  const d1=1+Math.floor(Math.random()*6);
+  const d2=1+Math.floor(Math.random()*6);
+  const n=d1+d2;
+  const dice=document.querySelectorAll('.die');
+  if(dice[0]){ dice[0].classList.add('rolling'); dice[0].setAttribute('data-n',String(d1)); }
+  if(dice[1]){ dice[1].classList.add('rolling'); dice[1].setAttribute('data-n',String(d2)); }
   await new Promise(r=>setTimeout(r,520));
   G.rolling=false;
-  if(G.local){ saveLocal(applyRoll(clone(s),n)); render(); }
+  if(G.local){ const ns=applyRoll(clone(s),n); ns.dice=[d1,d2]; saveLocal(ns); render(); }
   else {
     await gameRef(G.code).transaction(cur=>{
       if(!cur||cur.phase!=='roll'||cur.turn!==G.me) return cur;
-      return applyRoll(cur,n);
+      cur=applyRoll(cur,n); cur.dice=[d1,d2]; return cur;
     });
   }
 }
@@ -621,6 +627,14 @@ function dieHTML(n){
   const pips='<i></i><i></i><i></i><i></i><i></i><i></i><i></i>';
   return `<div class="die" data-n="${n||1}">${pips}</div>`;
 }
+function diceView(state){
+  const d = (state.dice && state.dice.length===2) ? state.dice : [1,1];
+  return `<div class="dicepair">${dieHTML(d[0])}${dieHTML(d[1])}</div>`;
+}
+function rollText(state){
+  if(state.dice && state.dice.length===2){ return `${state.dice[0]} + ${state.dice[1]} = <b>${state.roll}</b>`; }
+  return `<b>${state.roll}</b>`;
+}
 
 function turnPanel(state){
   const {roller,questioner,follower}=rolesFor(state.turn);
@@ -647,11 +661,11 @@ function turnPanel(state){
       const cue = G.local
         ? `Pass the phone to <b>${escapeHtml(rN)}</b> (Seat ${rL}), then roll.`
         : `You’re on <b>${posName(state.positions[roller])}</b>.`;
-      body=`<div class="dietray">${dieHTML(state.roll)}
-        <div style="flex:1"><button class="btn" data-act="roll">${G.local?escapeHtml(rN)+' rolls':'Roll the die'}</button>
+      body=`<div class="dietray">${diceView(state)}
+        <div style="flex:1"><button class="btn" data-act="roll">${G.local?escapeHtml(rN)+' rolls':'Roll the dice'}</button>
         <div class="dieinfo" style="margin-top:8px">${cue}</div></div></div>`;
     } else {
-      body=`<div class="dietray">${dieHTML(state.roll)}
+      body=`<div class="dietray">${diceView(state)}
         <div class="waiting"><span class="pulse"></span> Waiting for <b>&nbsp;${escapeHtml(rN)}&nbsp;</b> to roll…</div></div>`;
     }
     return `<div class="card">${head}${body}</div>`;
@@ -661,7 +675,7 @@ function turnPanel(state){
     const sq=SQUARES[state.square];
     const dest=state.move?state.move.to:state.positions[roller];
     return `<div class="card">${head}
-      <div class="dieinfo" style="margin:6px 0 2px">Rolled a <b>${state.roll}</b> → landed on square ${state.square}.</div>
+      <div class="dieinfo" style="margin:6px 0 2px">Rolled ${rollText(state)} → landed on square ${state.square}.</div>
       <div class="actionbox"><span class="ico">${sq.ico}</span>
         <div><strong style="color:var(--ink)">${sq.lab}.</strong>
         <div class="dieinfo">${escapeHtml(rN)} moves to <b>${posName(dest)}</b>. No question on action squares.</div></div></div>
@@ -685,7 +699,7 @@ function turnPanel(state){
     <div class="line"><span class="who ${fL}">${fL}</span><span class="say">
       <b style="color:var(--ink)">${escapeHtml(fN)}</b> asks <b style="color:var(--ink)">${escapeHtml(rN)}</b> a follow-up question.</span></div>`;
   return `<div class="card">${head}
-      <div class="dieinfo" style="margin:4px 0 0">Rolled a <b>${state.roll}</b>.</div>
+      <div class="dieinfo" style="margin:4px 0 0">Rolled ${rollText(state)}.</div>
       ${qbox}
       <div style="padding:2px 0">${script}</div>
       ${nextBtn(state)}</div>`;
