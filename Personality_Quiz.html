@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>What Would You Do? — A Personality Quiz</title>
+<style>
+  :root{
+    --ink:#20242b;
+    --paper:#fbf7ef;
+    --card:#ffffff;
+    --line:#e6ddcc;
+    --driver:#d1493b;   /* A - red    */
+    --social:#e8a020;   /* B - gold   */
+    --thinker:#2f6d9c;  /* C - blue   */
+    --support:#3f8a5a;  /* D - green  */
+    --shadow:0 6px 22px rgba(40,32,16,.10);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    -webkit-text-size-adjust:100%;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:22px 18px 60px;min-height:100vh;}
+
+  /* ---------- HOME ---------- */
+  #home{display:flex;flex-direction:column;justify-content:center;align-items:center;
+        text-align:center;min-height:88vh;}
+  .badge{display:flex;gap:10px;margin-bottom:26px;}
+  .badge span{
+    width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-size:26px;font-weight:800;color:#fff;box-shadow:var(--shadow);
+    animation:float 3s ease-in-out infinite;
+  }
+  .badge span:nth-child(1){background:var(--driver);animation-delay:0s;}
+  .badge span:nth-child(2){background:var(--social);animation-delay:.25s;}
+  .badge span:nth-child(3){background:var(--thinker);animation-delay:.5s;}
+  .badge span:nth-child(4){background:var(--support);animation-delay:.75s;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+  .eyebrow{font-size:15px;letter-spacing:.22em;text-transform:uppercase;color:#a08a63;font-weight:700;margin-bottom:12px;}
+  h1.title{font-size:40px;line-height:1.12;margin:0 0 16px;font-weight:800;letter-spacing:-.5px;}
+  h1.title em{font-style:normal;color:var(--driver);}
+  .lede{font-size:19px;color:#5a5346;max-width:420px;margin:0 auto 34px;}
+  .start{
+    border:none;cursor:pointer;
+    background:var(--ink);color:#fff;
+    font-size:22px;font-weight:700;
+    padding:18px 46px;border-radius:16px;
+    box-shadow:var(--shadow);
+    transition:transform .12s ease, background .2s ease;
+  }
+  .start:active{transform:scale(.96);}
+  .hint{margin-top:20px;font-size:15px;color:#9a917f;}
+
+  /* ---------- QUIZ ---------- */
+  #quiz{display:none;}
+  .topbar{padding-top:6px;margin-bottom:22px;}
+  .count{font-size:15px;font-weight:700;color:#94876c;letter-spacing:.04em;margin-bottom:8px;}
+  .bar{height:10px;background:#ece3d3;border-radius:99px;overflow:hidden;}
+  .fill{height:100%;width:0;background:var(--ink);border-radius:99px;transition:width .35s ease;}
+
+  .q{font-size:25px;font-weight:800;line-height:1.32;margin:26px 2px 24px;letter-spacing:-.3px;}
+  .opts{display:flex;flex-direction:column;gap:14px;}
+  .opt{
+    text-align:left;cursor:pointer;
+    background:var(--card);border:2px solid var(--line);
+    border-radius:16px;padding:17px 18px;
+    font-size:18.5px;line-height:1.42;color:var(--ink);
+    box-shadow:0 2px 8px rgba(40,32,16,.05);
+    transition:transform .1s ease,border-color .15s ease,background .15s ease;
+    display:flex;gap:14px;align-items:flex-start;
+  }
+  .opt:active{transform:scale(.985);}
+  .opt.sel{border-color:var(--ink);background:#fffdf8;}
+  .opt .letter{
+    flex:0 0 auto;width:30px;height:30px;border-radius:9px;
+    background:#efe7d7;color:#7d715a;font-weight:800;font-size:16px;
+    display:flex;align-items:center;justify-content:center;margin-top:1px;
+  }
+  .opt.sel .letter{background:var(--ink);color:#fff;}
+  .back{
+    display:inline-block;margin-top:26px;
+    background:none;border:none;cursor:pointer;
+    color:#9a917f;font-size:16px;font-weight:600;padding:8px 4px;
+  }
+  .back:disabled{opacity:.3;cursor:default;}
+
+  /* ---------- RESULT ---------- */
+  #result{display:none;padding-top:10px;}
+  .r-cap{text-align:center;font-size:15px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:#a08a63;margin-bottom:10px;}
+  .r-badge{
+    width:96px;height:96px;border-radius:26px;margin:0 auto 18px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:52px;box-shadow:var(--shadow);
+  }
+  .r-type{text-align:center;font-size:34px;font-weight:800;margin:0 0 4px;letter-spacing:-.4px;}
+  .r-sub{text-align:center;font-size:18px;color:#6b6353;margin:0 0 26px;}
+  .r-card{
+    background:var(--card);border:2px solid var(--line);border-radius:18px;
+    padding:20px 20px 6px;margin-bottom:16px;box-shadow:0 2px 10px rgba(40,32,16,.05);
+  }
+  .r-card h3{
+    font-size:14px;letter-spacing:.12em;text-transform:uppercase;
+    margin:0 0 6px;font-weight:800;color:var(--thinker);
+  }
+  .r-card.warn h3{color:var(--driver);}
+  .r-card p{margin:0 0 16px;font-size:18px;line-height:1.6;color:#39352d;}
+  .r-foot{text-align:center;font-size:15px;color:#a89e8a;margin-top:26px;line-height:1.5;}
+  .blend-note{
+    background:#fff;border:2px dashed var(--line);border-radius:16px;
+    padding:16px 18px;margin-bottom:22px;font-size:18px;text-align:center;color:#4a4438;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ HOME ============ -->
+  <section id="home">
+    <div class="badge"><span>A</span><span>B</span><span>C</span><span>D</span></div>
+    <div class="eyebrow">A Second Conditional Quiz</div>
+    <h1 class="title">What Would <em>You</em> Do?</h1>
+    <p class="lede">Answer 20 questions about what you would do in different situations. At the end, discover your personality type!</p>
+    <button class="start" id="startBtn">Start Quiz</button>
+    <div class="hint">20 questions · about 5 minutes · answer honestly</div>
+  </section>
+
+  <!-- ============ QUIZ ============ -->
+  <section id="quiz">
+    <div class="topbar">
+      <div class="count" id="count">Question 1 of 20</div>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+    </div>
+    <div class="q" id="qText"></div>
+    <div class="opts" id="opts"></div>
+    <button class="back" id="backBtn">← Back</button>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section id="result">
+    <div class="r-cap">Your Result</div>
+    <div class="r-badge" id="rBadge"></div>
+    <h2 class="r-type" id="rType"></h2>
+    <div class="r-sub" id="rSub"></div>
+    <div id="rBody"></div>
+    <div class="r-foot">Thank you for taking the quiz!<br>Ask a partner: “If you were in question 1, what would you really do?”</div>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   OPTIONAL: SAVE RESULTS TO GOOGLE SHEETS
+   Paste your Google Apps Script web-app URL between the quotes
+   below. Leave it empty ("") to turn saving off.
+   (Setup steps are in the message that came with this file.)
+   ============================================================ */
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyAZFslzerAzUj-kyu-aPaaTG75LiGszVv6-N48XIqG6L3MOLXhwv8Dtzipc0JVzEzXFQ/exec";
+
+/* ---------- DATA ---------- */
+// type codes: D=Driver, I=Socializer, C=Thinker, S=Supporter
+var TYPES = {
+  D:{name:"The Driver",       color:"#d1493b", emoji:"🚀", sub:"Strong · takes action · a leader"},
+  I:{name:"The Socializer",   color:"#e8a020", emoji:"🎉", sub:"Warm · full of energy · loves people"},
+  C:{name:"The Thinker",      color:"#2f6d9c", emoji:"🧭", sub:"Careful · logical · plans well"},
+  S:{name:"The Supporter",    color:"#3f8a5a", emoji:"🌿", sub:"Kind · calm · a good listener"}
+};
+
+var SUMMARY = {
+  D:{
+    basically:"You are strong and you like to take action. When there is a problem, you don’t wait — you fix it. You like to be the leader, make a plan, and get things done. People trust you to take control when it’s important.",
+    strengths:"You make choices fast and you are not afraid of hard things. You say what you think, so people always know how you really feel. You finish what you start.",
+    warning:"Sometimes you move so fast that you forget to ask how other people feel. You can seem like you’re in too much of a hurry, or too honest, even when you want to help. If you slow down and listen, people will follow you even more.",
+    work:"You are a natural leader. You do well when you have a clear goal and can be in charge.",
+    love:"You are loyal, and you protect the people you love. You show love by doing things for them, more than by saying nice words."
+  },
+  I:{
+    basically:"You are warm and full of energy. You love people, talking, and having fun. When you walk into a room, you make it brighter. For you, life is an adventure, and you like to share it with others.",
+    strengths:"You see the good side of things. You are friendly, and you make other people feel happy and welcome. You bring people together and turn a normal day into a good memory.",
+    warning:"Because you love the fun part, small details and plans can feel boring to you, and you may forget them. You sometimes choose with your heart before you stop to think. If you plan a little more and finish what you start, your great ideas will really happen.",
+    work:"You do well in a team, and in any job with people, energy, and talking.",
+    love:"You show your feelings easily, and you keep love warm and fun."
+  },
+  C:{
+    basically:"You are careful and you like to do things the right way. You want to understand something fully before you start. People trust you because your work is correct and your advice is smart.",
+    strengths:"You are organized and you plan well. You see small things that other people miss. You make good choices because you look at the facts first, instead of choosing too fast. People come to you for good advice.",
+    warning:"You want everything to be perfect, and that can make you worry, or make it hard to choose when you don’t have all the facts. Not everything has to be perfect — sometimes “good enough” is really fine. Try to trust your feelings a little more.",
+    work:"You are great at any job that needs care, planning, and knowing the details well.",
+    love:"You show love by being someone people can count on. You are the one who remembers and gets ready early."
+  },
+  S:{
+    basically:"You are kind, calm, and patient. You care a lot about the people around you, and you like peace. You are the calm person who makes everyone else feel safe and understood.",
+    strengths:"You are a very good listener, loyal and gentle. You keep the group together, you stay away from fights, and you help other people without asking for a “thank you.” People feel comfortable when they are near you.",
+    warning:"Because you don’t like fighting, you may stay quiet when you should say something, or put everyone else first and forget about yourself. Your feelings are important too — it’s okay to ask for what you want.",
+    work:"You are the team member people can depend on. You help everyone work together in a calm way.",
+    love:"You are warm and giving, and you love in a slow, deep, and steady way."
+  }
+};
+
+var BLEND = {
+  DI:"You are strong and full of energy. You like to lead, and you also love being with people.",
+  DC:"You are strong, but careful. You take action, but only after you think it through.",
+  DS:"You are strong, but kind. You can lead, and you also care a lot about people’s feelings.",
+  IC:"You love people, but you also like to plan. You are fun, and also careful.",
+  IS:"You love people and you are kind. You bring energy, and you also make people feel safe.",
+  CS:"You are careful and calm. You think things through, and you also care about keeping peace."
+};
+
+// Each question: text + 4 options [letter shown A-D] each with a type.
+var Q = [
+ {t:"If you were at a party and someone you weren’t interested in asked you on a date, how would you turn them down?",
+  o:[["I would be honest and tell them directly that I wasn’t interested.","D"],
+     ["I would laugh it off and change the subject to keep things fun.","I"],
+     ["I would politely say I already had plans, to avoid any awkwardness.","C"],
+     ["I would gently say I’d rather just be friends, so their feelings weren’t hurt.","S"]]},
+ {t:"If you won ¥1,000,000 in a lottery, what would you do with it?",
+  o:[["I would throw a big party and share it with all my friends.","I"],
+     ["I would invest it carefully after researching the best options.","C"],
+     ["I would quietly give some to my family and save the rest for them.","S"],
+     ["I would use it to start a project or business I’d always wanted to lead.","D"]]},
+ {t:"If you were planning a group trip, what role would you take?",
+  o:[["I would make a detailed budget and check all the bookings.","C"],
+     ["I would make sure everyone was comfortable and happy.","S"],
+     ["I would take charge and organize the whole itinerary.","D"],
+     ["I would be the one keeping everyone excited and having fun.","I"]]},
+ {t:"If a friend told you a secret and asked you to keep it, what would you do?",
+  o:[["I would keep it and check in on my friend to support them.","S"],
+     ["I would keep it, but I’d tell them directly if I thought they were making a mistake.","D"],
+     ["I would keep it, but it would be hard not to share such interesting news.","I"],
+     ["I would keep it completely private and never mention it.","C"]]},
+ {t:"If you disagreed with your boss in a meeting, what would you do?",
+  o:[["I would speak up immediately and say what I thought.","D"],
+     ["I would find a lighthearted way to raise it so no one felt tense.","I"],
+     ["I would wait, gather my facts, and send a careful email later.","C"],
+     ["I would stay quiet to keep the peace, then talk privately afterward.","S"]]},
+ {t:"If you were given a free weekend with no plans, what would you do?",
+  o:[["I would call friends and find something fun to do together.","I"],
+     ["I would enjoy some quiet time reading or organizing at home.","C"],
+     ["I would spend it relaxing with my family.","S"],
+     ["I would set a goal and finally finish something important.","D"]]},
+ {t:"If you saw someone break a small rule, like cutting in line, what would you do?",
+  o:[["I would mention it to a staff member instead of confronting them.","C"],
+     ["I would let it go to avoid any trouble.","S"],
+     ["I would tell them directly to wait their turn.","D"],
+     ["I would say something funny to point it out without being rude.","I"]]},
+ {t:"If you had to give a speech to 100 people, how would you feel and act?",
+  o:[["I would feel nervous but do it so I didn’t let people down.","S"],
+     ["I would enjoy the challenge and speak confidently.","D"],
+     ["I would love the attention and improvise happily.","I"],
+     ["I would prepare and rehearse every detail in advance.","C"]]},
+ {t:"If your friend was upset and crying, what would you do?",
+  o:[["I would try to solve their problem and give them a plan.","D"],
+     ["I would cheer them up and try to make them smile.","I"],
+     ["I would ask calm questions to understand exactly what happened.","C"],
+     ["I would just sit with them and listen patiently.","S"]]},
+ {t:"If you were buying a new phone, how would you decide?",
+  o:[["I would ask friends what’s popular and choose something stylish.","I"],
+     ["I would compare all the specs and reviews carefully.","C"],
+     ["I would choose a familiar brand I already trust.","S"],
+     ["I would pick the most powerful one quickly and move on.","D"]]},
+ {t:"If you started a new hobby, how would you approach it?",
+  o:[["I would study the basics thoroughly before starting.","C"],
+     ["I would take my time and enjoy it at a relaxed pace.","S"],
+     ["I would aim to get good at it as fast as possible.","D"],
+     ["I would join a group so I could enjoy it with others.","I"]]},
+ {t:"If a family member asked to borrow a large sum of money, what would you do?",
+  o:[["I would help, because family comes first, even if it was difficult for me.","S"],
+     ["I would set clear terms and a repayment plan.","D"],
+     ["I would lend it and trust everything would work out fine.","I"],
+     ["I would ask exactly why they needed it before deciding.","C"]]},
+ {t:"If you had trouble sleeping for a week, what would you do?",
+  o:[["I would track my habits and look for the exact cause.","C"],
+     ["I would just wait patiently for it to pass.","S"],
+     ["I would take quick action and try several solutions fast.","D"],
+     ["I would ask friends what worked for them.","I"]]},
+ {t:"If you moved to a new neighborhood, how would you get to know people?",
+  o:[["I would introduce myself to everyone right away.","I"],
+     ["I would observe first and get to know people slowly.","C"],
+     ["I would wait to be invited and be a friendly neighbor.","S"],
+     ["I would take the lead and organize a gathering.","D"]]},
+ {t:"If a foreign tourist looked lost near your home, what would you do?",
+  o:[["I would confidently walk over and give clear directions.","D"],
+     ["I would cheerfully try to help, even with limited English.","I"],
+     ["I would check the exact route on my phone before helping.","C"],
+     ["I would kindly help and make sure they felt welcome.","S"]]},
+ {t:"If you had to make a big decision quickly, what would you do?",
+  o:[["I would choose the option that upset the fewest people.","S"],
+     ["I would decide fast and trust my instinct.","D"],
+     ["I would ask others and go with a hopeful choice.","I"],
+     ["I would want more time to weigh the options.","C"]]},
+ {t:"If a new convenience store replaced a beloved old local shop, how would you feel?",
+  o:[["I would accept it quickly — things change, and that’s fine.","D"],
+     ["I would miss the old shop but enjoy meeting people at the new one.","I"],
+     ["I would weigh the pros and cons of the change fairly.","C"],
+     ["I would feel sad about losing the old tradition and connection.","S"]]},
+ {t:"If you were planning your ideal retirement, what would it look like?",
+  o:[["I would fill my days with friends, travel, and social events.","I"],
+     ["I would plan my finances carefully and keep a steady routine.","C"],
+     ["I would spend peaceful time close to family and old friends.","S"],
+     ["I would set new goals and stay busy leading projects.","D"]]},
+ {t:"If a friend cancelled plans with you at the last minute, how would you react?",
+  o:[["I would quietly accept it, but I would remember it next time.","C"],
+     ["I would say it was fine, because I didn’t want them to feel bad.","S"],
+     ["I would tell them honestly that it bothered me.","D"],
+     ["I would make a joke about it and suggest another day.","I"]]},
+ {t:"If you and a friend disagreed about where to eat, what would you do?",
+  o:[["I would happily go wherever my friend preferred.","S"],
+     ["I would state my choice and expect to decide quickly.","D"],
+     ["I would suggest somewhere new and exciting for both of us.","I"],
+     ["I would suggest the place with the best reviews.","C"]]}
+];
+
+var LETTERS = ["A","B","C","D"];
+
+/* ---------- STATE ---------- */
+var idx = 0;
+var answers = new Array(Q.length).fill(null);  // stores type code per question
+var saved = false;
+
+/* ---------- ELEMENTS ---------- */
+var homeEl=document.getElementById("home");
+var quizEl=document.getElementById("quiz");
+var resultEl=document.getElementById("result");
+var qText=document.getElementById("qText");
+var optsEl=document.getElementById("opts");
+var countEl=document.getElementById("count");
+var fillEl=document.getElementById("fill");
+var backBtn=document.getElementById("backBtn");
+
+/* ---------- NAV ---------- */
+document.getElementById("startBtn").addEventListener("click",function(){
+  homeEl.style.display="none";
+  quizEl.style.display="block";
+  idx=0;
+  renderQuestion();
+  window.scrollTo(0,0);
+});
+
+backBtn.addEventListener("click",function(){
+  if(idx>0){ idx--; renderQuestion(); window.scrollTo(0,0); }
+});
+
+function renderQuestion(){
+  var q=Q[idx];
+  countEl.textContent="Question "+(idx+1)+" of "+Q.length;
+  fillEl.style.width=((idx)/(Q.length))*100+"%";
+  qText.textContent=q.t;
+  optsEl.innerHTML="";
+  q.o.forEach(function(opt,i){
+    var b=document.createElement("button");
+    b.className="opt"+(answers[idx]!==null && sameChoice(i)?" sel":"");
+    b.innerHTML='<span class="letter">'+LETTERS[i]+'</span><span>'+opt[0]+'</span>';
+    b.addEventListener("click",function(){ choose(i); });
+    optsEl.appendChild(b);
+  });
+  backBtn.disabled = (idx===0);
+  // remember which display-index was chosen for this question (for highlight)
+}
+
+// track chosen display index per question so we can re-highlight on Back
+var chosenIndex = new Array(Q.length).fill(null);
+function sameChoice(i){ return chosenIndex[idx]===i; }
+
+function choose(i){
+  var q=Q[idx];
+  answers[idx]=q.o[i][1];
+  chosenIndex[idx]=i;
+  // highlight selection
+  var kids=optsEl.children;
+  for(var k=0;k<kids.length;k++){ kids[k].classList.toggle("sel", k===i); }
+  // advance after a short moment so the tap is felt
+  setTimeout(function(){
+    if(idx < Q.length-1){
+      idx++;
+      renderQuestion();
+      window.scrollTo(0,0);
+    } else {
+      fillEl.style.width="100%";
+      showResult();
+    }
+  },260);
+}
+
+/* ---------- RESULT ---------- */
+function showResult(){
+  var tally={D:0,I:0,C:0,S:0};
+  answers.forEach(function(t){ if(t) tally[t]++; });
+
+  // find max
+  var max=-1, order=["D","I","C","S"], top=[];
+  order.forEach(function(k){ if(tally[k]>max) max=tally[k]; });
+  order.forEach(function(k){ if(tally[k]===max) top.push(k); });
+
+  quizEl.style.display="none";
+  resultEl.style.display="block";
+  window.scrollTo(0,0);
+
+  var rBadge=document.getElementById("rBadge");
+  var rType=document.getElementById("rType");
+  var rSub=document.getElementById("rSub");
+  var rBody=document.getElementById("rBody");
+  rBody.innerHTML="";
+
+  var primaryForSave;
+
+  if(top.length===1){
+    var k=top[0]; primaryForSave=TYPES[k].name;
+    paintSingle(k,rBadge,rType,rSub,rBody);
+  } else if(top.length===2){
+    var key=order.filter(function(x){return top.indexOf(x)>-1;}).join("");
+    // normalize key order to match BLEND keys (D,I,C,S order)
+    primaryForSave=TYPES[top[0]].name+" + "+TYPES[top[1]].name;
+    paintBlend(top,key,rBadge,rType,rSub,rBody,tally);
+  } else {
+    primaryForSave="Balanced ("+top.map(function(x){return TYPES[x].name;}).join(", ")+")";
+    paintMany(top,rBadge,rType,rSub,rBody);
+  }
+
+  saveResult(primaryForSave, tally);
+}
+
+function card(title,text,warn){
+  return '<div class="r-card'+(warn?' warn':'')+'"><h3>'+title+'</h3><p>'+text+'</p></div>';
+}
+
+function paintSingle(k,badge,type,sub,body){
+  var T=TYPES[k], S=SUMMARY[k];
+  badge.style.background=T.color; badge.textContent=T.emoji;
+  type.textContent=T.name;
+  sub.textContent=T.sub;
+  body.innerHTML =
+    card("Basically",S.basically)+
+    card("Your strengths",S.strengths)+
+    card("Warning",S.warning,true)+
+    card("At work",S.work)+
+    card("In relationships",S.love);
+}
+
+function paintBlend(top,key,badge,type,sub,body,tally){
+  var a=top[0], b=top[1];
+  // gradient badge
+  badge.style.background="linear-gradient(135deg,"+TYPES[a].color+" 0%,"+TYPES[b].color+" 100%)";
+  badge.textContent="✨";
+  type.textContent=TYPES[a].name.replace("The ","")+" + "+TYPES[b].name.replace("The ","");
+  sub.textContent="You are a mix of two types!";
+  var line = BLEND[key] || BLEND[b+a] || "You are a balanced mix of two strengths.";
+  var html='<div class="blend-note">'+line+'</div>';
+  [a,b].forEach(function(k){
+    var T=TYPES[k], SM=SUMMARY[k];
+    html+='<div class="r-card"><h3>'+T.name+'</h3><p>'+SM.basically+'</p></div>';
+    html+=card("Strengths",SM.strengths);
+    html+=card("Warning",SM.warning,true);
+  });
+  body.innerHTML=html;
+}
+
+function paintMany(top,badge,type,sub,body){
+  badge.style.background="var(--ink)"; badge.textContent="🌟";
+  type.textContent="A Balanced Mix";
+  sub.textContent="You share several strengths!";
+  var html='<div class="blend-note">You are a real all-rounder. You have a little of each personality, and you can change your style to fit the situation.</div>';
+  top.forEach(function(k){
+    var T=TYPES[k], SM=SUMMARY[k];
+    html+='<div class="r-card"><h3>'+T.name+'</h3><p>'+SM.basically+'</p></div>';
+  });
+  body.innerHTML=html;
+}
+
+/* ---------- SAVE (optional) ---------- */
+function saveResult(resultName, tally){
+  if(saved) return;
+  saved=true;
+  if(!APPS_SCRIPT_URL) return;   // saving turned off
+  try{
+    var url = APPS_SCRIPT_URL
+      + (APPS_SCRIPT_URL.indexOf("?")>-1?"&":"?")
+      + "result=" + encodeURIComponent(resultName)
+      + "&D="+tally.D + "&I="+tally.I + "&C="+tally.C + "&S="+tally.S
+      + "&t=" + Date.now();
+    // image-beacon method: most reliable across sandboxes
+    var img = new Image();
+    img.src = url;
+    // fetch fallback (fire and forget)
+    if(window.fetch){
+      fetch(url,{method:"GET",mode:"no-cors"}).catch(function(){});
+    }
+  }catch(e){/* never let saving break the result screen */}
+}
+</script>
+</body>
+</html>
