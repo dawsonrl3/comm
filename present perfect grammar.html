@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Grammar Activity — Present Perfect vs. Past Simple</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #1a0e1a;
+    --surface: #241526;
+    --surface2:#2e1c31;
+    --border:  #452a48;
+    --accent:  #f472b6;
+    --gold:    #fbbf24;
+    --white:   #FFFFFF;
+    --light:   #f0d3e8;
+    --muted:   #a67aa3;
+    --success: #4CAF7D;
+    --error:   #E05C5C;
+    --A:       #f472b6;
+    --B:       #60a5fa;
+    --Taku:    #fbbf24;
+    --Nao:     #34d399;
+    --Ken:     #fb923c;
+    --Rin:     #a78bfa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--white); min-height: 100vh; padding-bottom: 60px; }
+
+  .header { background: linear-gradient(135deg, #1a0e1a 0%, #241526 100%); border-bottom: 1px solid var(--border); padding: 24px 20px 18px; text-align: center; }
+  .header-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; }
+  .header h1 { font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
+  .header .sub { font-size: 0.72rem; color: var(--muted); font-style: italic; }
+
+  .steps { display: flex; justify-content: center; align-items: center; padding: 12px 6px 0; overflow-x: auto; }
+  .step { display: flex; align-items: center; gap: 3px; font-size: 0.5rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); transition: color 0.3s; white-space: nowrap; }
+  .step.active { color: var(--accent); }
+  .step.done   { color: var(--success); }
+  .step-dot { width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.48rem; font-weight: 700; background: var(--surface); transition: all 0.3s; flex-shrink:0; }
+  .step.active .step-dot { border-color: var(--accent); color: var(--accent); }
+  .step.done   .step-dot { border-color: var(--success); background: var(--success); color: #fff; }
+  .step-line { width: 10px; height: 2px; background: var(--border); margin: 0 2px; }
+
+  .screen { display: none; padding: 18px; max-width: 540px; margin: 0 auto; }
+  .screen.active { display: block; animation: fadeUp 0.3s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  .sec-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 18px 0 9px; }
+  .instr { background: rgba(244,114,182,0.06); border: 1px solid rgba(244,114,182,0.18); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.78rem; color: #f0b8dc; line-height: 1.6; }
+  .instr strong { color: var(--accent); }
+
+  .field { margin-bottom: 11px; }
+  .field label { display: block; font-size: 0.63rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .field input { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--white); font-family: 'Sora', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+  .field input:focus { border-color: var(--accent); }
+
+  .partner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .partner-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 14px; padding: 16px 10px; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--white); }
+  .partner-btn.sel-A { border-color: var(--A); background: rgba(244,114,182,0.07); }
+  .partner-btn.sel-B { border-color: var(--B); background: rgba(96,165,250,0.07); }
+  .partner-letter { font-size: 1.9rem; font-family: 'Lora', serif; font-weight: 600; margin-bottom: 4px; }
+  .pa { color: var(--A); } .pb { color: var(--B); }
+  .partner-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.45; }
+
+  .chat-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; text-align: center; }
+  .bubble-row { display: flex; margin-bottom: 10px; }
+  .bubble-row.A, .bubble-row.Taku, .bubble-row.Ken { justify-content: flex-start; }
+  .bubble-row.B, .bubble-row.Nao, .bubble-row.Rin { justify-content: flex-end; }
+  .bubble { max-width: 84%; border-radius: 14px; padding: 10px 13px; font-family: 'Lora', serif; font-size: 0.84rem; line-height: 1.5; }
+  .bubble.A { background: rgba(244,114,182,0.14); border: 1px solid rgba(244,114,182,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.B { background: rgba(96,165,250,0.14); border: 1px solid rgba(96,165,250,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble.Taku { background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.Nao { background: rgba(52,211,153,0.14); border: 1px solid rgba(52,211,153,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble.Ken { background: rgba(251,146,60,0.14); border: 1px solid rgba(251,146,60,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.Rin { background: rgba(167,139,250,0.14); border: 1px solid rgba(167,139,250,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble-speaker { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .bubble-speaker.A { color: var(--A); }
+  .bubble-speaker.B { color: var(--B); }
+  .bubble-speaker.Taku { color: var(--Taku); }
+  .bubble-speaker.Nao { color: var(--Nao); }
+  .bubble-speaker.Ken { color: var(--Ken); }
+  .bubble-speaker.Rin { color: var(--Rin); }
+
+  select.blank-sel { display: inline-block; width: auto; min-width: 96px; background: var(--surface2); border: 1.5px solid var(--accent); border-radius: 7px; color: var(--accent); font-family: 'Sora', sans-serif; font-size: 0.74rem; font-weight: 600; padding: 3px 22px 3px 8px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23f472b6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; margin: 0 2px; }
+  select.blank-sel.correct { border-color: var(--success); color: var(--success); background-color: rgba(76,175,125,0.1); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234CAF7D'/%3E%3C/svg%3E"); }
+  select.blank-sel.wrong { border-color: var(--error); color: var(--error); background-color: rgba(224,92,92,0.1); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23E05C5C'/%3E%3C/svg%3E"); }
+  select.blank-sel option { background: #2e1c31; color: var(--white); }
+
+  .btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-family: 'Sora', sans-serif; font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #1a0e1a; }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); margin-top: 9px; }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--white); }
+
+  .total-box { background: var(--surface2); border: 1.5px solid var(--accent); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px; }
+  .total-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .total-num   { font-family: 'Lora', serif; font-size: 2.6rem; font-weight: 600; line-height: 1; }
+  .total-denom { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .split-scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; margin-bottom: 10px; }
+  .split-card { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 10px 6px; text-align: center; }
+  .split-label { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+  .split-num   { font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 600; }
+  .split-denom { font-size: 0.56rem; color: var(--muted); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .review-row { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .review-row:last-child { border-bottom: none; }
+  .review-num { min-width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+  .rn-ok  { background: rgba(76,175,125,0.18); color: var(--success); }
+  .rn-bad { background: rgba(224,92,92,0.18);  color: var(--error); }
+  .review-body { flex: 1; }
+  .review-label  { font-size: 0.66rem; color: var(--muted); margin-bottom: 2px; }
+  .review-answer { font-weight: 600; font-size: 0.82rem; }
+  .rev-ok  { color: var(--success); }
+  .rev-bad { color: var(--error); }
+  .review-correct { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .review-correct span { color: var(--success); font-weight: 600; }
+
+  #sheetStatus { text-align: center; font-size: 0.72rem; color: var(--muted); padding: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">Grammar Speaking Activity</div>
+  <h1>Present Perfect vs. Past Simple</h1>
+  <p class="sub">Experiences, achievements, and specific-time events</p>
+</div>
+
+<div class="steps" id="stepBar">
+  <div class="step active" id="s1"><div class="step-dot">1</div></div><div class="step-line"></div>
+  <div class="step" id="s2"><div class="step-dot">2</div></div><div class="step-line"></div>
+  <div class="step" id="s3"><div class="step-dot">3</div></div><div class="step-line"></div>
+  <div class="step" id="s4"><div class="step-dot">4</div></div><div class="step-line"></div>
+  <div class="step" id="s5"><div class="step-dot">5</div></div><div class="step-line"></div>
+  <div class="step" id="s6"><div class="step-dot">6</div></div><div class="step-line"></div>
+  <div class="step" id="s7"><div class="step-dot">7</div></div><div class="step-line"></div>
+  <div class="step" id="s8"><div class="step-dot">8</div></div>
+</div>
+
+<div class="screen active" id="screen1">
+  <div class="sec-label">Your details</div>
+  <div class="field"><label>Student Number</label><input type="text" id="studentNumber" placeholder="e.g. 24B001"></div>
+  <div class="field"><label>Name (Romaji)</label><input type="text" id="studentName" placeholder="e.g. Tanaka Yuki"></div>
+  <div class="sec-label">Your partner role</div>
+  <div class="partner-grid">
+    <div class="partner-btn" id="btnA" onclick="selectPartner('A')">
+      <div class="partner-letter pa">A</div>
+      <div class="partner-desc">Play <strong>Aya</strong> in all 4 talks.</div>
+    </div>
+    <div class="partner-btn" id="btnB" onclick="selectPartner('B')">
+      <div class="partner-letter pb">B</div>
+      <div class="partner-desc">Play <strong>Ren</strong> in all 4 talks.</div>
+    </div>
+  </div>
+  <br>
+  <button class="btn btn-primary" id="btnNext1" onclick="goTo(2)" disabled>Start →</button>
+</div>
+
+<div class="screen" id="screen2"><div class="instr" id="s2instr"></div><div id="chat1Container"></div><button class="btn btn-primary" onclick="finishChat(1)">Next: Talk 2 →</button><button class="btn btn-ghost" onclick="goTo(1)">← Back</button></div>
+<div class="screen" id="screen3"><div class="instr" id="s3instr"></div><div id="chat2Container"></div><button class="btn btn-primary" onclick="finishChat(2)">Next: Talk 3 →</button><button class="btn btn-ghost" onclick="goTo(2)">← Back</button></div>
+<div class="screen" id="screen4"><div class="instr" id="s4instr"></div><div id="chat3Container"></div><button class="btn btn-primary" onclick="finishChat(3)">Next: Talk 4 →</button><button class="btn btn-ghost" onclick="goTo(3)">← Back</button></div>
+<div class="screen" id="screen5"><div class="instr" id="s5instr"></div><div id="chat4Container"></div><button class="btn btn-primary" onclick="finishChat(4)">Next: Fix It 1 →</button><button class="btn btn-ghost" onclick="goTo(4)">← Back</button></div>
+
+<div class="screen" id="screen6">
+  <div class="instr">🔧 <strong>Fix the Mistake 1.</strong> Read Taku and Nao's conversation (present perfect only). Complete it on your own.</div>
+  <div id="fix1Container"></div>
+  <button class="btn btn-primary" onclick="goTo(7)">Next: Fix It 2 →</button>
+  <button class="btn btn-ghost" onclick="goTo(5)">← Back</button>
+</div>
+
+<div class="screen" id="screen7">
+  <div class="instr">🔧 <strong>Fix the Mistake 2.</strong> Read Ken and Rin's conversation (present perfect AND past simple). Complete it on your own.</div>
+  <div id="fix2Container"></div>
+  <button class="btn btn-primary" onclick="submitAll()">Submit & See Score →</button>
+  <button class="btn btn-ghost" onclick="goTo(6)">← Back</button>
+</div>
+
+<div class="screen" id="screen8">
+  <div class="total-box">
+    <div class="total-label">Total Score</div>
+    <div class="total-num" id="totalNum">—</div>
+    <div class="total-denom" id="totalDenom">out of —</div>
+  </div>
+  <div class="split-scores">
+    <div class="split-card"><div class="split-label">Talk 1</div><div class="split-num" id="c1Num">—</div><div class="split-denom" id="c1Denom">/—</div></div>
+    <div class="split-card"><div class="split-label">Talk 2</div><div class="split-num" id="c2Num">—</div><div class="split-denom" id="c2Denom">/—</div></div>
+    <div class="split-card"><div class="split-label">Talk 3</div><div class="split-num" id="c3Num">—</div><div class="split-denom" id="c3Denom">/—</div></div>
+  </div>
+  <div class="split-scores">
+    <div class="split-card"><div class="split-label">Talk 4</div><div class="split-num" id="c4Num">—</div><div class="split-denom" id="c4Denom">/—</div></div>
+    <div class="split-card"><div class="split-label">Fix 1</div><div class="split-num" id="fix1Num">—</div><div class="split-denom">/11</div></div>
+    <div class="split-card"><div class="split-label">Fix 2</div><div class="split-num" id="fix2Num">—</div><div class="split-denom">/18</div></div>
+  </div>
+  <div class="sec-label">Answer review</div>
+  <div class="card" id="reviewList"></div>
+  <div id="sheetStatus"></div>
+</div>
+
+<script>
+const SHEET_URL = "PASTE_URL_HERE";
+
+const chat1 = [
+  { speaker:'A', segs:["","you ever ","","durian?"], blanks:[{correct:"Have",options:["Have","Has","Did"]},{correct:"eaten",options:["eaten","ate","eat"]}] },
+  { speaker:'B', segs:["Yes, I ","","durian once, and I ","","blue cheese too! Actually, my sister ","","even weirder things than me."], blanks:[{correct:"have eaten",options:["have eaten","has eaten","ate"]},{correct:"have tried",options:["have tried","has tried","tried"]},{correct:"has eaten",options:["has eaten","have eaten","eaten"]}] },
+  { speaker:'A', segs:["Really? What ","","she ","","?"], blanks:[{correct:"has",options:["has","have","did"]},{correct:"eaten",options:["eaten","ate","eat"]}] },
+  { speaker:'B', segs:["She ","","crickets, but she ","","frog legs."], blanks:[{correct:"hasn't eaten",options:["hasn't eaten","haven't eaten","didn't eat"]},{correct:"has tried",options:["has tried","have tried","tried"]}] },
+  { speaker:'A', segs:["Wow, impressive! ","","you ever ","","outside Japan alone?"], blanks:[{correct:"Have",options:["Have","Has","Did"]},{correct:"traveled",options:["traveled","travel","traveling"]}] },
+  { speaker:'B', segs:["Yes, I ","","to Thailand alone, but I ","","never ","","to Europe. I ","","never ","","Japan for more than two weeks either."], blanks:[{correct:"have traveled",options:["have traveled","has traveled","traveled"]},{correct:"have",options:["have","has","am"]},{correct:"been",options:["been","was","being"]},{correct:"have",options:["have","has","am"]},{correct:"left",options:["left","leaved","leave"]}] },
+];
+
+const chat2 = [
+  { speaker:'B', segs:["Hey Aya! ","","you ","","your assignment yet?"], blanks:[{correct:"Have",options:["Have","Has","Did"]},{correct:"finished",options:["finished","finish","finishing"]}] },
+  { speaker:'A', segs:["No, I ","","it yet, but I ","","the introduction already."], blanks:[{correct:"haven't finished",options:["haven't finished","hasn't finished","didn't finish"]},{correct:"have written",options:["have written","has written","wrote"]}] },
+  { speaker:'B', segs:["Good start! My roommate ","","hers already, and she even ","","time to make tea."], blanks:[{correct:"has finished",options:["has finished","have finished","finished"]},{correct:"has found",options:["has found","have found","found"]}] },
+  { speaker:'A', segs:["Nice! ","","you ever ","","a perfect score on a test?"], blanks:[{correct:"Have",options:["Have","Has","Did"]},{correct:"gotten",options:["gotten","got","get"]}] },
+  { speaker:'B', segs:["Yes, I ","","one once, in this class. My little brother ","","one too \u2014 he's really smart."], blanks:[{correct:"have gotten",options:["have gotten","has gotten","got"]},{correct:"has gotten",options:["has gotten","have gotten","got"]}] },
+  { speaker:'A', segs:["Wow! I ","","never ","","one, but I ","","close a few times."], blanks:[{correct:"have",options:["have","has","am"]},{correct:"gotten",options:["gotten","got","get"]},{correct:"have come",options:["have come","has come","came"]}] },
+];
+
+const chat3 = [
+  { speaker:'A', segs:["Hey Ren! ","","you ever ","","to Osaka?"], blanks:[{correct:"Have",options:["Have","Did","Has"]},{correct:"been",options:["been","gone","go"]}] },
+  { speaker:'B', segs:["Yes, I ","","there last month with my family. We ","","so much amazing food."], blanks:[{correct:"went",options:["went","have gone","have been"]},{correct:"ate",options:["ate","have eaten","eaten"]}] },
+  { speaker:'A', segs:["Nice! ","","you ","","Osaka Castle when you were there?"], blanks:[{correct:"Did",options:["Did","Have","Has"]},{correct:"visit",options:["visit","visited","been"]}] },
+  { speaker:'B', segs:["No, we ","","time \u2014 but I ","","it in photos many times before."], blanks:[{correct:"didn't have",options:["didn't have","haven't had","hasn't had"]},{correct:"have seen",options:["have seen","saw","seen"]}] },
+  { speaker:'A', segs:["That's too bad. ","","your sister ever ","","to Osaka?"], blanks:[{correct:"Has",options:["Has","Did","Have"]},{correct:"been",options:["been","go","went"]}] },
+  { speaker:'B', segs:["Yes, she ","","there twice, but she ","","never ","","the castle either!"], blanks:[{correct:"has been",options:["has been","went","was"]},{correct:"has",options:["has","have","did"]},{correct:"seen",options:["seen","saw","see"]}] },
+  { speaker:'A', segs:["Interesting! I ","","to Osaka three years ago, and I ","","the castle then."], blanks:[{correct:"went",options:["went","have gone","have been"]},{correct:"saw",options:["saw","have seen","seen"]}] },
+];
+
+const chat4 = [
+  { speaker:'B', segs:["Hey Aya! ","","you ever ","","a musical instrument?"], blanks:[{correct:"Have",options:["Have","Did","Has"]},{correct:"played",options:["played","play","have played"]}] },
+  { speaker:'A', segs:["Yes, I ","","the piano since I was seven."], blanks:[{correct:"have played",options:["have played","played","play"]}] },
+  { speaker:'B', segs:["Cool! ","","you ","","any concerts recently?"], blanks:[{correct:"Have",options:["Have","Did","Has"]},{correct:"attended",options:["attended","attend","went"]}] },
+  { speaker:'A', segs:["Yes, I ","","in a small concert last weekend. It ","","my first time performing in public."], blanks:[{correct:"performed",options:["performed","have performed","perform"]},{correct:"was",options:["was","has been","is"]}] },
+  { speaker:'B', segs:["Amazing! ","","your brother ever ","","an instrument?"], blanks:[{correct:"Has",options:["Has","Did","Have"]},{correct:"played",options:["played","play","have played"]}] },
+  { speaker:'A', segs:["No, he ","","one, but he wants to start guitar lessons next month."], blanks:[{correct:"hasn't played",options:["hasn't played","didn't play","haven't played"]}] },
+  { speaker:'B', segs:["Nice! I ","","the guitar when I was in middle school, but I ","","it after a year."], blanks:[{correct:"played",options:["played","have played","plays"]},{correct:"quit",options:["quit","have quit","quits"]}] },
+  { speaker:'A', segs:["Really? ","","you ever ","","about playing again?"], blanks:[{correct:"Have",options:["Have","Did","Has"]},{correct:"thought",options:["thought","think","have thought"]}] },
+  { speaker:'B', segs:["I ","","about it many times, but I ","","it yet."], blanks:[{correct:"have thought",options:["have thought","thought","think"]},{correct:"haven't done",options:["haven't done","didn't do","hasn't done"]}] },
+];
+
+const fix1Chat = [
+  { speaker:'Taku', segs:["Hi Nao! ","","you ever ","","a speech in English?"], blanks:[{correct:"Have",options:["Have","Has","Did"]},{correct:"given",options:["given","gave","give"]}] },
+  { speaker:'Nao',  segs:["Yes, I ","","one last semester! My friend Emi ","","three speeches already this year."], blanks:[{correct:"have given",options:["have given","has given","gave"]},{correct:"has given",options:["has given","have given","given"]}] },
+  { speaker:'Taku', segs:["Wow, she's experienced! ","","she ever ","","a speech contest?"], blanks:[{correct:"Has",options:["Has","Have","Did"]},{correct:"won",options:["won","win","winning"]}] },
+  { speaker:'Nao',  segs:["No, she ","","one yet, but she ","","second place twice."], blanks:[{correct:"hasn't won",options:["hasn't won","haven't won","didn't win"]},{correct:"has gotten",options:["has gotten","have gotten","got"]}] },
+  { speaker:'Taku', segs:["That's still impressive! I ","","never ","","in any contest."], blanks:[{correct:"have",options:["have","has","am"]},{correct:"competed",options:["competed","compete","competing"]}] },
+  { speaker:'Nao',  segs:["Me neither, but I ","","about trying next year."], blanks:[{correct:"have thought",options:["have thought","has thought","thought"]}] },
+];
+
+const fix2Chat = [
+  { speaker:'Ken', segs:["Hi Rin! ","","you ever ","","camping?"], blanks:[{correct:"Have",options:["Have","Did","Has"]},{correct:"been",options:["been","gone","go"]}] },
+  { speaker:'Rin', segs:["Yes, I ","","camping last summer with my club. We ","","a tent by the lake."], blanks:[{correct:"went",options:["went","have gone","have been"]},{correct:"set up",options:["set up","have set up","setting up"]}] },
+  { speaker:'Ken', segs:["Nice! ","","you ","","any wildlife while you were there?"], blanks:[{correct:"Did",options:["Did","Have","Has"]},{correct:"see",options:["see","saw","seen"]}] },
+  { speaker:'Rin', segs:["Yes, we ","","a deer near our tent. I ","","never ","","a wild deer before that trip."], blanks:[{correct:"saw",options:["saw","have seen","seen"]},{correct:"have",options:["have","has","did"]},{correct:"seen",options:["seen","saw","see"]}] },
+  { speaker:'Ken', segs:["Wow! ","","your brother ever ","","camping?"], blanks:[{correct:"Has",options:["Has","Did","Have"]},{correct:"been",options:["been","go","went"]}] },
+  { speaker:'Rin', segs:["No, he ","",", but he wants to try it this year."], blanks:[{correct:"hasn't",options:["hasn't","didn't","haven't"]}] },
+  { speaker:'Ken', segs:["I ","","camping only once, when I was a kid, and I ","","scared of the dark the whole night."], blanks:[{correct:"went",options:["went","have been","have gone"]},{correct:"was",options:["was","have been","is"]}] },
+  { speaker:'Rin', segs:["Ha! ","","you ever ","","camping again since then?"], blanks:[{correct:"Have",options:["Have","Did","Has"]},{correct:"been",options:["been","go","went"]}] },
+  { speaker:'Ken', segs:["No, I ","",", but maybe I ","","ready to try again soon."], blanks:[{correct:"haven't",options:["haven't","didn't","hasn't"]},{correct:"am",options:["am","have","was"]}] },
+];
+
+let currentScreen = 1;
+let partner  = null;
+let chat1Sel = {}, chat2Sel = {}, chat3Sel = {}, chat4Sel = {}, fix1Sel = {}, fix2Sel = {};
+let locked   = false;
+
+const LS_KEY = 'present_perfect_state';
+
+function saveState() {
+  const state = { currentScreen, partner, chat1Sel, chat2Sel, chat3Sel, chat4Sel, fix1Sel, fix2Sel, locked,
+    studentName: document.getElementById('studentName').value,
+    studentNumber: document.getElementById('studentNumber').value };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+}
+function clearState() { try { localStorage.removeItem(LS_KEY); } catch(e) {} }
+
+function restoreState(state) {
+  partner = state.partner;
+  chat1Sel = state.chat1Sel || {}; chat2Sel = state.chat2Sel || {};
+  chat3Sel = state.chat3Sel || {}; chat4Sel = state.chat4Sel || {};
+  fix1Sel = state.fix1Sel || {}; fix2Sel = state.fix2Sel || {};
+  locked = state.locked || false;
+  if (state.studentName) document.getElementById('studentName').value = state.studentName;
+  if (state.studentNumber) document.getElementById('studentNumber').value = state.studentNumber;
+  if (partner) {
+    document.getElementById('btnA').className = 'partner-btn' + (partner==='A' ? ' sel-A' : '');
+    document.getElementById('btnB').className = 'partner-btn' + (partner==='B' ? ' sel-B' : '');
+  }
+  checkReady();
+  const n = state.currentScreen || 1;
+  goTo(n);
+  setTimeout(() => {
+    if (n===2) restoreSel('c1', chat1Sel);
+    if (n===3) restoreSel('c2', chat2Sel);
+    if (n===4) restoreSel('c3', chat3Sel);
+    if (n===5) restoreSel('c4', chat4Sel);
+    if (n===6) restoreSel('fix1', fix1Sel);
+    if (n===7) restoreSel('fix2', fix2Sel);
+  }, 120);
+}
+function restoreSel(prefix, sel) {
+  Object.entries(sel).forEach(([k,v]) => { const el=document.getElementById(`${prefix}_${k}`); if(el) el.value=v; });
+}
+
+function updateSteps(n) {
+  for (let i=1;i<=8;i++) {
+    const el = document.getElementById('s'+i);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    el.querySelector('.step-dot').textContent = i < n ? '✓' : i;
+  }
+}
+function goTo(n) {
+  currentScreen = n;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen'+n).classList.add('active');
+  updateSteps(n);
+  window.scrollTo(0,0);
+  if (n===2) buildChat(1); if (n===3) buildChat(2); if (n===4) buildChat(3); if (n===5) buildChat(4);
+  if (n===6) buildFix(1); if (n===7) buildFix(2);
+  saveState();
+}
+
+function selectPartner(p) {
+  partner = p;
+  document.getElementById('btnA').className = 'partner-btn' + (p==='A' ? ' sel-A' : '');
+  document.getElementById('btnB').className = 'partner-btn' + (p==='B' ? ' sel-B' : '');
+  checkReady();
+  saveState();
+}
+function checkReady() {
+  document.getElementById('btnNext1').disabled = !(
+    partner && document.getElementById('studentName').value.trim() && document.getElementById('studentNumber').value.trim()
+  );
+}
+document.getElementById('studentName').addEventListener('input', () => { checkReady(); saveState(); });
+document.getElementById('studentNumber').addEventListener('input', () => { checkReady(); saveState(); });
+
+function shuffle(arr) { return arr.slice().sort(() => Math.random() - 0.5); }
+
+function renderLine(line, lineIdx, prefix, isReaderFn) {
+  const isMine = isReaderFn(line.speaker);
+  let html = '';
+  let blankIdx = 0;
+  line.segs.forEach(seg => {
+    if (seg === '') {
+      const b = line.blanks[blankIdx];
+      if (isMine) {
+        html += ` ${b.correct} `;
+      } else {
+        const opts = shuffle(b.options);
+        const w = Math.max(96, Math.max(...opts.map(o=>o.length)) * 7) + 'px';
+        const key = `${lineIdx}_${blankIdx}`;
+        html += `<select class="blank-sel" id="${prefix}_${key}" style="width:${w}" onchange="onBlank('${prefix}',${lineIdx},${blankIdx},this.value)"><option value="">\u2014</option>${opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+      }
+      blankIdx++;
+    } else {
+      html += seg;
+    }
+  });
+  return html;
+}
+
+const TALKS = { 1: chat1, 2: chat2, 3: chat3, 4: chat4 };
+const TALK_LABELS = {
+  1: "Talk 1 \u2014 Unusual Experiences",
+  2: "Talk 2 \u2014 Achievements",
+  3: "Talk 3 \u2014 Osaka Trip",
+  4: "Talk 4 \u2014 Musical Instrument",
+};
+const SEL_MAP = { 1: () => chat1Sel, 2: () => chat2Sel, 3: () => chat3Sel, 4: () => chat4Sel };
+
+function buildChat(num) {
+  const data = TALKS[num];
+  const containerId = 'chat'+num+'Container';
+  const instrId = 's'+(num+1)+'instr';
+  const prefix = 'c'+num;
+  const label = TALK_LABELS[num];
+
+  document.getElementById(instrId).innerHTML =
+    `\ud83d\udcac <strong>${label}.</strong> Read your lines aloud. Listen to your partner and fill in their blanks.`;
+
+  if (document.getElementById(containerId).innerHTML) return;
+
+  let html = `<div class="chat-label">${label}</div>`;
+  data.forEach((line, i) => {
+    const content = renderLine(line, i, prefix, (spk) => spk === partner);
+    html += `
+      <div class="bubble-row ${line.speaker}">
+        <div class="bubble ${line.speaker}">
+          <div class="bubble-speaker ${line.speaker}">${line.speaker === 'A' ? 'Aya' : 'Ren'}</div>
+          ${content}
+        </div>
+      </div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+function onBlank(prefix, lineIdx, blankIdx, val) {
+  const key = `${lineIdx}_${blankIdx}`;
+  if (prefix === 'c1') chat1Sel[key] = val;
+  else if (prefix === 'c2') chat2Sel[key] = val;
+  else if (prefix === 'c3') chat3Sel[key] = val;
+  else if (prefix === 'c4') chat4Sel[key] = val;
+  else if (prefix === 'fix1') fix1Sel[key] = val;
+  else if (prefix === 'fix2') fix2Sel[key] = val;
+  saveState();
+}
+function finishChat(num) {
+  const data = TALKS[num];
+  const sel = SEL_MAP[num]();
+  let missing = false;
+  data.forEach((line, i) => {
+    if (line.speaker === partner) return;
+    line.blanks.forEach((_, bi) => { if (!sel[`${i}_${bi}`]) missing = true; });
+  });
+  if (missing) { alert('Please fill in all the blanks you can hear.'); return; }
+  goTo(num + 2);
+}
+
+function buildFix(num) {
+  const data = num === 1 ? fix1Chat : fix2Chat;
+  const containerId = 'fix'+num+'Container';
+  const prefix = 'fix'+num;
+  const label = num === 1 ? "Taku & Nao \u2014 Speech Contest" : "Ken & Rin \u2014 Camping Trip";
+  if (document.getElementById(containerId).innerHTML) return;
+  let html = `<div class="chat-label">${label}</div>`;
+  data.forEach((line, i) => {
+    const content = renderLine(line, i, prefix, () => false);
+    html += `
+      <div class="bubble-row ${line.speaker}">
+        <div class="bubble ${line.speaker}">
+          <div class="bubble-speaker ${line.speaker}">${line.speaker}</div>
+          ${content}
+        </div>
+      </div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+
+function submitAll() {
+  let missing = false;
+  fix2Chat.forEach((line,i) => { line.blanks.forEach((_,bi) => { if (!fix2Sel[`${i}_${bi}`]) missing = true; }); });
+  if (missing) { alert('Please fill in every blank in the Ken & Rin conversation.'); return; }
+  locked = true;
+
+  const review = [];
+
+  function scoreChat(data, sel, prefix, label, restrictToListener) {
+    let score = 0;
+    data.forEach((line,i) => {
+      if (restrictToListener && line.speaker === partner) return;
+      line.blanks.forEach((b, bi) => {
+        const key = `${i}_${bi}`;
+        const chosen = sel[key];
+        const ok = chosen === b.correct;
+        if (ok) score++;
+        const el = document.getElementById(`${prefix}_${key}`);
+        if (el) el.className = 'blank-sel ' + (ok ? 'correct' : 'wrong');
+        review.push({ label: `${label} \u2014 ${line.speaker}'s line ${i+1}`, chosen, ok, correct: b.correct });
+      });
+    });
+    return score;
+  }
+
+  const c1Score = scoreChat(chat1, chat1Sel, 'c1', 'Talk 1', true);
+  const c2Score = scoreChat(chat2, chat2Sel, 'c2', 'Talk 2', true);
+  const c3Score = scoreChat(chat3, chat3Sel, 'c3', 'Talk 3', true);
+  const c4Score = scoreChat(chat4, chat4Sel, 'c4', 'Talk 4', true);
+  const fix1Score = scoreChat(fix1Chat, fix1Sel, 'fix1', 'Fix It 1', false);
+  const fix2Score = scoreChat(fix2Chat, fix2Sel, 'fix2', 'Fix It 2', false);
+
+  // Max points depend on partner role, since each talk's blanks aren't split evenly
+  function talkMaxForPartner(data) {
+    return data.reduce((sum, line) => line.speaker === partner ? sum : sum + line.blanks.length, 0);
+  }
+  const c1Max = talkMaxForPartner(chat1);
+  const c2Max = talkMaxForPartner(chat2);
+  const c3Max = talkMaxForPartner(chat3);
+  const c4Max = talkMaxForPartner(chat4);
+  const fix1Max = 11, fix2Max = 18;
+  const totalMax = c1Max + c2Max + c3Max + c4Max + fix1Max + fix2Max;
+
+  const total = c1Score + c2Score + c3Score + c4Score + fix1Score + fix2Score;
+  const pct = Math.round(total/totalMax*100);
+
+  document.getElementById('totalNum').textContent = total + '/' + totalMax;
+  document.getElementById('totalDenom').textContent = 'out of ' + totalMax;
+  document.getElementById('c1Num').textContent = c1Score;
+  document.getElementById('c1Denom').textContent = '/' + c1Max;
+  document.getElementById('c2Num').textContent = c2Score;
+  document.getElementById('c2Denom').textContent = '/' + c2Max;
+  document.getElementById('c3Num').textContent = c3Score;
+  document.getElementById('c3Denom').textContent = '/' + c3Max;
+  document.getElementById('c4Num').textContent = c4Score;
+  document.getElementById('c4Denom').textContent = '/' + c4Max;
+  document.getElementById('fix1Num').textContent = fix1Score;
+  document.getElementById('fix2Num').textContent = fix2Score;
+
+  document.getElementById('reviewList').innerHTML = review.map(r => `
+    <div class="review-row">
+      <div class="review-num ${r.ok?'rn-ok':'rn-bad'}">${r.ok?'\u2713':'\u2717'}</div>
+      <div class="review-body">
+        <div class="review-label">${r.label}</div>
+        <div class="review-answer ${r.ok?'rev-ok':'rev-bad'}">Your answer: ${r.chosen || '\u2014'}</div>
+        ${!r.ok?`<div class="review-correct">Correct: <span>${r.correct}</span></div>`:''}
+      </div>
+    </div>`).join('');
+
+  goTo(8);
+  clearState();
+  logToSheets(c1Score, c2Score, c3Score, c4Score, fix1Score, fix2Score, total, totalMax, c1Max, c2Max, c3Max, c4Max, pct, review);
+}
+
+function logToSheets(c1Score, c2Score, c3Score, c4Score, fix1Score, fix2Score, total, totalMax, c1Max, c2Max, c3Max, c4Max, pct, review) {
+  if (!SHEET_URL || SHEET_URL === 'PASTE_URL_HERE') {
+    document.getElementById('sheetStatus').textContent = '\u26a0\ufe0f No gradebook URL set.';
+    return;
+  }
+  document.getElementById('sheetStatus').textContent = '\u23f3 Saving to gradebook\u2026';
+  const name = document.getElementById('studentName').value.trim();
+  const num  = document.getElementById('studentNumber').value.trim();
+  const detail = review.map(r => `${r.label}:${r.chosen||'\u2014'}(${r.ok?'\u2713':'\u2717'})`).join(' | ');
+
+  const payload = JSON.stringify({
+    studentNumber: num, studentName: name, partner,
+    score: total + '/' + totalMax, percent: pct,
+    talk1Score: c1Score + '/' + c1Max, talk2Score: c2Score + '/' + c2Max, talk3Score: c3Score + '/' + c3Max, talk4Score: c4Score + '/' + c4Max,
+    fix1Score: fix1Score + '/11', fix2Score: fix2Score + '/18',
+    response: detail
+  });
+
+  const form = document.createElement('form');
+  form.method = 'POST'; form.action = SHEET_URL; form.target = 'hidden_iframe'; form.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'hidden'; input.name = 'data'; input.value = payload;
+  form.appendChild(input);
+  const iframe = document.createElement('iframe');
+  iframe.name = 'hidden_iframe'; iframe.style.display = 'none';
+  iframe.onload = () => { document.getElementById('sheetStatus').textContent = '\u2705 Saved to gradebook.'; };
+  document.body.appendChild(iframe);
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(() => {
+    const st = document.getElementById('sheetStatus');
+    if (st.textContent.includes('\u23f3')) st.textContent = '\u2705 Saved to gradebook.';
+  }, 3000);
+}
+
+window.addEventListener('load', () => {
+  const state = loadState();
+  if (state && state.currentScreen > 1) restoreState(state);
+});
+</script>
+</body>
+</html>
