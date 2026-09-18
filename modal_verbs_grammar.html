@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Grammar Activity — Have to / Don't have to / Can / Can't</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0d1a12;
+    --surface: #142418;
+    --surface2:#1b301f;
+    --border:  #2a4a32;
+    --accent:  #4ade80;
+    --gold:    #fbbf24;
+    --white:   #FFFFFF;
+    --light:   #d0ecd8;
+    --muted:   #6ba07d;
+    --success: #4CAF7D;
+    --error:   #E05C5C;
+    --A:       #4ade80;
+    --B:       #fb923c;
+    --Yuto:    #60a5fa;
+    --Sakura:  #f472b6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--white); min-height: 100vh; padding-bottom: 60px; }
+
+  .header { background: linear-gradient(135deg, #0d1a12 0%, #142418 100%); border-bottom: 1px solid var(--border); padding: 24px 20px 18px; text-align: center; }
+  .header-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; }
+  .header h1 { font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
+  .header .sub { font-size: 0.72rem; color: var(--muted); font-style: italic; }
+
+  .steps { display: flex; justify-content: center; align-items: center; padding: 12px 8px 0; overflow-x: auto; }
+  .step { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); transition: color 0.3s; white-space: nowrap; }
+  .step.active { color: var(--accent); }
+  .step.done   { color: var(--success); }
+  .step-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.54rem; font-weight: 700; background: var(--surface); transition: all 0.3s; }
+  .step.active .step-dot { border-color: var(--accent); color: var(--accent); }
+  .step.done   .step-dot { border-color: var(--success); background: var(--success); color: #fff; }
+  .step-line { width: 20px; height: 2px; background: var(--border); margin: 0 4px; }
+
+  .screen { display: none; padding: 18px; max-width: 540px; margin: 0 auto; }
+  .screen.active { display: block; animation: fadeUp 0.3s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  .sec-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 18px 0 9px; }
+  .instr { background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.18); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.78rem; color: #a8e8bc; line-height: 1.6; }
+  .instr strong { color: var(--accent); }
+
+  .field { margin-bottom: 11px; }
+  .field label { display: block; font-size: 0.63rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .field input { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--white); font-family: 'Sora', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+  .field input:focus { border-color: var(--accent); }
+
+  .partner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .partner-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 14px; padding: 16px 10px; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--white); }
+  .partner-btn.sel-A { border-color: var(--A); background: rgba(74,222,128,0.07); }
+  .partner-btn.sel-B { border-color: var(--B); background: rgba(251,146,60,0.07); }
+  .partner-letter { font-size: 1.9rem; font-family: 'Lora', serif; font-weight: 600; margin-bottom: 4px; }
+  .pa { color: var(--A); } .pb { color: var(--B); }
+  .partner-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.45; }
+
+  .chat-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; text-align: center; }
+  .bubble-row { display: flex; margin-bottom: 10px; }
+  .bubble-row.A, .bubble-row.Yuto { justify-content: flex-start; }
+  .bubble-row.B, .bubble-row.Sakura { justify-content: flex-end; }
+  .bubble { max-width: 84%; border-radius: 14px; padding: 10px 13px; font-family: 'Lora', serif; font-size: 0.84rem; line-height: 1.5; }
+  .bubble.A { background: rgba(74,222,128,0.14); border: 1px solid rgba(74,222,128,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.B { background: rgba(251,146,60,0.14); border: 1px solid rgba(251,146,60,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble.Yuto { background: rgba(96,165,250,0.14); border: 1px solid rgba(96,165,250,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.Sakura { background: rgba(244,114,182,0.14); border: 1px solid rgba(244,114,182,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble-speaker { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .bubble-speaker.A { color: var(--A); }
+  .bubble-speaker.B { color: var(--B); }
+  .bubble-speaker.Yuto { color: var(--Yuto); }
+  .bubble-speaker.Sakura { color: var(--Sakura); }
+
+  select.blank-sel { display: inline-block; width: auto; min-width: 108px; background: var(--surface2); border: 1.5px solid var(--accent); border-radius: 7px; color: var(--accent); font-family: 'Sora', sans-serif; font-size: 0.74rem; font-weight: 600; padding: 3px 22px 3px 8px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234ade80'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; margin: 0 2px; }
+  select.blank-sel.correct { border-color: var(--success); color: var(--success); background-color: rgba(76,175,125,0.1); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234CAF7D'/%3E%3C/svg%3E"); }
+  select.blank-sel.wrong { border-color: var(--error); color: var(--error); background-color: rgba(224,92,92,0.1); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23E05C5C'/%3E%3C/svg%3E"); }
+  select.blank-sel option { background: #1b301f; color: var(--white); }
+
+  .btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-family: 'Sora', sans-serif; font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #0d1a12; }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); margin-top: 9px; }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--white); }
+
+  .total-box { background: var(--surface2); border: 1.5px solid var(--accent); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px; }
+  .total-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .total-num   { font-family: 'Lora', serif; font-size: 2.6rem; font-weight: 600; line-height: 1; }
+  .total-denom { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .split-scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .split-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; text-align: center; }
+  .split-label { font-size: 0.54rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .split-num   { font-family: 'Lora', serif; font-size: 1.4rem; font-weight: 600; }
+  .split-denom { font-size: 0.6rem; color: var(--muted); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .review-row { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .review-row:last-child { border-bottom: none; }
+  .review-num { min-width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+  .rn-ok  { background: rgba(76,175,125,0.18); color: var(--success); }
+  .rn-bad { background: rgba(224,92,92,0.18);  color: var(--error); }
+  .review-body { flex: 1; }
+  .review-label  { font-size: 0.66rem; color: var(--muted); margin-bottom: 2px; }
+  .review-answer { font-weight: 600; font-size: 0.82rem; }
+  .rev-ok  { color: var(--success); }
+  .rev-bad { color: var(--error); }
+  .review-correct { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .review-correct span { color: var(--success); font-weight: 600; }
+
+  #sheetStatus { text-align: center; font-size: 0.72rem; color: var(--muted); padding: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">Grammar Speaking Activity</div>
+  <h1>Campus &amp; Job Rules</h1>
+  <p class="sub">have to / don't have to / has to / doesn't have to / can / can't</p>
+</div>
+
+<div class="steps" id="stepBar">
+  <div class="step active" id="s1"><div class="step-dot">1</div><span>Setup</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s2"><div class="step-dot">2</div><span>Talk 1</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s3"><div class="step-dot">3</div><span>Talk 2</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s4"><div class="step-dot">4</div><span>Fix It</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s5"><div class="step-dot">5</div><span>Score</span></div>
+</div>
+
+<div class="screen active" id="screen1">
+  <div class="sec-label">Your details</div>
+  <div class="field"><label>Student Number</label><input type="text" id="studentNumber" placeholder="e.g. 24B001"></div>
+  <div class="field"><label>Name (Romaji)</label><input type="text" id="studentName" placeholder="e.g. Tanaka Yuki"></div>
+  <div class="sec-label">Your partner role</div>
+  <div class="partner-grid">
+    <div class="partner-btn" id="btnA" onclick="selectPartner('A')">
+      <div class="partner-letter pa">A</div>
+      <div class="partner-desc">Play <strong>Aya</strong> in both talks.</div>
+    </div>
+    <div class="partner-btn" id="btnB" onclick="selectPartner('B')">
+      <div class="partner-letter pb">B</div>
+      <div class="partner-desc">Play <strong>Ren</strong> in both talks.</div>
+    </div>
+  </div>
+  <br>
+  <button class="btn btn-primary" id="btnNext1" onclick="goTo(2)" disabled>Start →</button>
+</div>
+
+<div class="screen" id="screen2"><div class="instr" id="s2instr"></div><div id="chat1Container"></div><button class="btn btn-primary" onclick="finishChat(1)">Next: Talk 2 →</button><button class="btn btn-ghost" onclick="goTo(1)">← Back</button></div>
+<div class="screen" id="screen3"><div class="instr" id="s3instr"></div><div id="chat2Container"></div><button class="btn btn-primary" onclick="finishChat(2)">Next: Fix the Mistake →</button><button class="btn btn-ghost" onclick="goTo(2)">← Back</button></div>
+
+<div class="screen" id="screen4">
+  <div class="instr">🔧 <strong>Fix the Mistake.</strong> Read Yuto and Sakura's conversation about exam rules. Complete it on your own.</div>
+  <div id="fixContainer"></div>
+  <button class="btn btn-primary" onclick="submitAll()">Submit & See Score →</button>
+  <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
+</div>
+
+<div class="screen" id="screen5">
+  <div class="total-box">
+    <div class="total-label">Total Score</div>
+    <div class="total-num" id="totalNum">—</div>
+    <div class="total-denom" id="totalDenom">out of —</div>
+  </div>
+  <div class="split-scores">
+    <div class="split-card"><div class="split-label">Talk 1</div><div class="split-num" id="c1Num">—</div><div class="split-denom" id="c1Denom">/—</div></div>
+    <div class="split-card"><div class="split-label">Talk 2</div><div class="split-num" id="c2Num">—</div><div class="split-denom" id="c2Denom">/—</div></div>
+    <div class="split-card"><div class="split-label">Fix It</div><div class="split-num" id="fixNum">—</div><div class="split-denom">/16</div></div>
+  </div>
+  <div class="sec-label">Answer review</div>
+  <div class="card" id="reviewList"></div>
+  <div id="sheetStatus"></div>
+</div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzoZckhdazM3UV-tblOxNKvjmPeZ1WgHHGhp3dAq_Y1_6Q3lxTaU2_6z3r05lqJPKAd/exec";
+
+// ── Talk 1: A=Aya asks, B=Ren answers — university rules ────────
+const chat1 = [
+  { speaker:'A', segs:["Hey Ren! ","","bring your ID card to campus every day?"], blanks:[{correct:"Do you have to",options:["Do you have to","Does you have to","Are you have to"]}] },
+  { speaker:'B', segs:["Yes, I ","","show it at the library too, so I always carry it. But I ","","show it in the cafeteria \u2014 they never check."], blanks:[{correct:"have to",options:["have to","has to","don't have to"]},{correct:"don't have to",options:["don't have to","doesn't have to","have to"]}] },
+  { speaker:'A', segs:["Really? ","","pay in cash at the cafeteria, or can you use a card?"], blanks:[{correct:"Do you have to",options:["Do you have to","Does you have to","Are you have to"]}] },
+  { speaker:'B', segs:["I ","","pay in cash \u2014 they accept both cash and cards."], blanks:[{correct:"don't have to",options:["don't have to","doesn't have to","have to"]}] },
+  { speaker:'A', segs:["","eat in the library?"], blanks:[{correct:"Can you",options:["Can you","Do you have to","Are you can"]}] },
+  { speaker:'B', segs:["No, we ","","eat inside, but we ","","drink water there."], blanks:[{correct:"can't",options:["can't","can","don't have to"]},{correct:"can",options:["can","can't","have to"]}] },
+  { speaker:'A', segs:["That's convenient! ","","wear a school uniform to class?"], blanks:[{correct:"Do we have to",options:["Do we have to","Does we have to","Are we have to"]}] },
+  { speaker:'B', segs:["No, we ","","wear one \u2014 it's a university, not high school! But we ","","wear pajamas to class \u2014 that's against the dress code."], blanks:[{correct:"don't have to",options:["don't have to","doesn't have to","have to"]},{correct:"can't",options:["can't","can","don't have to"]}] },
+  { speaker:'A', segs:["What about your roommate? ","","follow the same rules?"], blanks:[{correct:"Does he have to",options:["Does he have to","Do he have to","Is he have to"]}] },
+  { speaker:'B', segs:["No, he ","","follow the exact same rules since he's in a different department, but he ","","respect quiet hours too."], blanks:[{correct:"doesn't have to",options:["doesn't have to","don't have to","has to"]},{correct:"has to",options:["has to","have to","doesn't have to"]}] },
+  { speaker:'A', segs:["Interesting! Does the handbook explain the attendance policy?"], blanks:[] },
+  { speaker:'B', segs:["Yes, it says everyone ","","attend at least 80% of classes to pass the course."], blanks:[{correct:"has to",options:["has to","have to","doesn't have to"]}] },
+  { speaker:'A', segs:["What about phones? ","","use them during class?"], blanks:[{correct:"Can we",options:["Can we","Do we have to","Are we can"]}] },
+  { speaker:'B', segs:["No, we ","","use our phones during lectures, but we ","","use them during break time."], blanks:[{correct:"can't",options:["can't","can","don't have to"]},{correct:"can",options:["can","can't","have to"]}] },
+  { speaker:'A', segs:["","students park on campus?"], blanks:[{correct:"Can",options:["Can","Do","Are"]}] },
+  { speaker:'B', segs:["Yes, we ","","park in the west lot, but we ","","park near the main building."], blanks:[{correct:"can",options:["can","can't","have to"]},{correct:"can't",options:["can't","can","don't have to"]}] },
+  { speaker:'A', segs:["That's strict! ","","bring your laptop to every class?"], blanks:[{correct:"Do you have to",options:["Do you have to","Does you have to","Are you have to"]}] },
+  { speaker:'B', segs:["For some classes, I ","","bring one, but for lecture classes, I ","","\u2014 the teacher just talks the whole time."], blanks:[{correct:"have to",options:["have to","has to","don't have to"]},{correct:"don't have to",options:["don't have to","doesn't have to","have to"]}] },
+];
+
+// ── Talk 2: B=Ren asks, A=Aya answers — part-time job rules ─────
+const chat2 = [
+  { speaker:'B', segs:["Hey Aya! ","","wear a uniform at your part-time job?"], blanks:[{correct:"Do you have to",options:["Do you have to","Does you have to","Are you have to"]}] },
+  { speaker:'A', segs:["Yes, I ","","wear the store uniform during my work shift. But I ","","wear it after work."], blanks:[{correct:"have to",options:["have to","has to","don't have to"]},{correct:"don't have to",options:["don't have to","doesn't have to","have to"]}] },
+  { speaker:'B', segs:["I see. ","","arrive early for your work shift?"], blanks:[{correct:"Do you have to",options:["Do you have to","Does you have to","Are you have to"]}] },
+  { speaker:'A', segs:["Actually, I ","","arrive early \u2014 my manager gets annoyed if we come too early."], blanks:[{correct:"don't have to",options:["don't have to","doesn't have to","have to"]}] },
+  { speaker:'B', segs:["","leave the store during your break?"], blanks:[{correct:"Can you",options:["Can you","Do you have to","Are you can"]}] },
+  { speaker:'A', segs:["Yes, I ","","leave, but I ","","go too far since my break is only 15 minutes."], blanks:[{correct:"can",options:["can","can't","have to"]},{correct:"can't",options:["can't","can","don't have to"]}] },
+  { speaker:'B', segs:["That's unusual! I bet you ","","use your phone during your work shift."], blanks:[{correct:"can't",options:["can't","can","don't have to"]}] },
+  { speaker:'A', segs:["That's right, I ","","use it while I'm working \u2014 it's against the rules. But during my break, I ","","leave my phone in my locker \u2014 I can bring it with me."], blanks:[{correct:"can't",options:["can't","can","don't have to"]},{correct:"don't have to",options:["don't have to","doesn't have to","have to"]}] },
+  { speaker:'B', segs:["What about your coworker Emi? ","","follow the same break rules?"], blanks:[{correct:"Does she have to",options:["Does she have to","Do she have to","Is she have to"]}] },
+  { speaker:'A', segs:["Yes, she ","","follow them too, but she ","","wear the uniform since she works in the office, not the store."], blanks:[{correct:"has to",options:["has to","have to","doesn't have to"]},{correct:"doesn't have to",options:["doesn't have to","don't have to","has to"]}] },
+  { speaker:'B', segs:["","employees get a discount at the store?"], blanks:[{correct:"Can",options:["Can","Do","Are"]}] },
+  { speaker:'A', segs:["Yes, we ","","get 10% off, but we ","","use it on sale items."], blanks:[{correct:"can",options:["can","can't","have to"]},{correct:"can't",options:["can't","can","don't have to"]}] },
+  { speaker:'B', segs:["Oh, one more thing \u2014 ","","eat food at the counter during your shift?"], blanks:[{correct:"Can you",options:["Can you","Do you have to","Are you can"]}] },
+  { speaker:'A', segs:["No, I ","","eat there, but I ","","eat in the staff break room."], blanks:[{correct:"can't",options:["can't","can","don't have to"]},{correct:"can",options:["can","can't","have to"]}] },
+  { speaker:'B', segs:["Good to know! Last question \u2014 ","","clean the store before closing?"], blanks:[{correct:"Do you have to",options:["Do you have to","Does you have to","Are you have to"]}] },
+  { speaker:'A', segs:["Yes, everyone ","","help clean before we close. Actually, every staff member ","","complete the closing checklist before leaving."], blanks:[{correct:"has to",options:["has to","have to","doesn't have to"]},{correct:"has to",options:["has to","have to","doesn't have to"]}] },
+];
+
+// ── Fix It: Yuto & Sakura — exam rules (individual) ─────────────
+const fixChat = [
+  { speaker:'Yuto', segs:["Hi Sakura! ","","bring a pencil case to the exam?"], blanks:[{correct:"Do you have to",options:["Do you have to","Does you have to","Are you have to"]}] },
+  { speaker:'Sakura', segs:["Yes, we ","","bring our own pens and pencils \u2014 the school doesn't provide any."], blanks:[{correct:"have to",options:["have to","has to","don't have to"]}] },
+  { speaker:'Yuto', segs:["I see. ","","bring a calculator?"], blanks:[{correct:"Do we have to",options:["Do we have to","Does we have to","Are we have to"]}] },
+  { speaker:'Sakura', segs:["No, we ","","\u2014 this exam doesn't need one. But we ","","bring our phones into the exam room at all."], blanks:[{correct:"don't have to",options:["don't have to","doesn't have to","have to"]},{correct:"can't",options:["can't","can","don't have to"]}] },
+  { speaker:'Yuto', segs:["","use a dictionary during the exam?"], blanks:[{correct:"Can we",options:["Can we","Do we have to","Are we can"]}] },
+  { speaker:'Sakura', segs:["No, we ","","use dictionaries, but we ","","use our class notes if the teacher allows it."], blanks:[{correct:"can't",options:["can't","can","don't have to"]},{correct:"can",options:["can","can't","have to"]}] },
+  { speaker:'Yuto', segs:["Good to know. What about my friend Kenji? ","","bring a calculator for his exam?"], blanks:[{correct:"Does he have to",options:["Does he have to","Do he have to","Is he have to"]}] },
+  { speaker:'Sakura', segs:["He ","","bring one either \u2014 his exam is the same as ours. But he ","","arrive fifteen minutes early since he's a transfer student."], blanks:[{correct:"doesn't have to",options:["doesn't have to","don't have to","has to"]},{correct:"has to",options:["has to","have to","doesn't have to"]}] },
+  { speaker:'Yuto', segs:["That's strict! What if we're late?"], blanks:[] },
+  { speaker:'Sakura', segs:["If you're late, you ","","enter after the exam starts \u2014 the door locks exactly on time."], blanks:[{correct:"can't",options:["can't","can","don't have to"]}] },
+  { speaker:'Yuto', segs:["","arrive really early, then?"], blanks:[{correct:"Do we have to",options:["Do we have to","Does we have to","Are we have to"]}] },
+  { speaker:'Sakura', segs:["We ","","arrive super early, but I always get there ten minutes before just in case."], blanks:[{correct:"don't have to",options:["don't have to","doesn't have to","have to"]}] },
+  { speaker:'Yuto', segs:["Smart. What does the exam rulebook say about talking?"], blanks:[] },
+  { speaker:'Sakura', segs:["It says every student ","","stay silent during the entire exam, and if someone talks, they ","","leave the room immediately."], blanks:[{correct:"has to",options:["has to","have to","doesn't have to"]},{correct:"has to",options:["has to","have to","doesn't have to"]}] },
+];
+
+// ── State ─────────────────────────────────────────────────────
+let currentScreen = 1;
+let partner  = null;
+let chat1Sel = {}, chat2Sel = {}, fixSel = {};
+let locked   = false;
+
+const LS_KEY = 'modal_verbs_state_v2';
+
+function saveState() {
+  const state = { currentScreen, partner, chat1Sel, chat2Sel, fixSel, locked,
+    studentName: document.getElementById('studentName').value,
+    studentNumber: document.getElementById('studentNumber').value };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+}
+function clearState() { try { localStorage.removeItem(LS_KEY); } catch(e) {} }
+
+function restoreState(state) {
+  partner = state.partner;
+  chat1Sel = state.chat1Sel || {}; chat2Sel = state.chat2Sel || {}; fixSel = state.fixSel || {};
+  locked = state.locked || false;
+  if (state.studentName) document.getElementById('studentName').value = state.studentName;
+  if (state.studentNumber) document.getElementById('studentNumber').value = state.studentNumber;
+  if (partner) {
+    document.getElementById('btnA').className = 'partner-btn' + (partner==='A' ? ' sel-A' : '');
+    document.getElementById('btnB').className = 'partner-btn' + (partner==='B' ? ' sel-B' : '');
+  }
+  checkReady();
+  const n = state.currentScreen || 1;
+  goTo(n);
+  setTimeout(() => {
+    if (n===2) restoreSel('c1', chat1Sel);
+    if (n===3) restoreSel('c2', chat2Sel);
+    if (n===4) restoreSel('fix', fixSel);
+  }, 120);
+}
+function restoreSel(prefix, sel) {
+  Object.entries(sel).forEach(([k,v]) => { const el=document.getElementById(`${prefix}_${k}`); if(el) el.value=v; });
+}
+
+function updateSteps(n) {
+  [1,2,3,4,5].forEach(i => {
+    const el = document.getElementById('s'+i);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    el.querySelector('.step-dot').textContent = i < n ? '✓' : i;
+  });
+}
+function goTo(n) {
+  currentScreen = n;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen'+n).classList.add('active');
+  updateSteps(n);
+  window.scrollTo(0,0);
+  if (n===2) buildChat(1); if (n===3) buildChat(2); if (n===4) buildFix();
+  saveState();
+}
+
+function selectPartner(p) {
+  partner = p;
+  document.getElementById('btnA').className = 'partner-btn' + (p==='A' ? ' sel-A' : '');
+  document.getElementById('btnB').className = 'partner-btn' + (p==='B' ? ' sel-B' : '');
+  checkReady();
+  saveState();
+}
+function checkReady() {
+  document.getElementById('btnNext1').disabled = !(
+    partner && document.getElementById('studentName').value.trim() && document.getElementById('studentNumber').value.trim()
+  );
+}
+document.getElementById('studentName').addEventListener('input', () => { checkReady(); saveState(); });
+document.getElementById('studentNumber').addEventListener('input', () => { checkReady(); saveState(); });
+
+function shuffle(arr) { return arr.slice().sort(() => Math.random() - 0.5); }
+
+function renderLine(line, lineIdx, prefix, isReaderFn) {
+  const isMine = isReaderFn(line.speaker);
+  let html = '';
+  let blankIdx = 0;
+  line.segs.forEach(seg => {
+    if (seg === '') {
+      const b = line.blanks[blankIdx];
+      if (isMine) {
+        html += ` ${b.correct} `;
+      } else {
+        const opts = shuffle(b.options);
+        const w = Math.max(108, Math.max(...opts.map(o=>o.length)) * 6.8) + 'px';
+        const key = `${lineIdx}_${blankIdx}`;
+        html += `<select class="blank-sel" id="${prefix}_${key}" style="width:${w}" onchange="onBlank('${prefix}',${lineIdx},${blankIdx},this.value)"><option value="">\u2014</option>${opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+      }
+      blankIdx++;
+    } else {
+      html += seg;
+    }
+  });
+  return html;
+}
+
+const CHATS = { 1: chat1, 2: chat2 };
+const TALK_LABELS = { 1: "Talk 1 \u2014 University Rules", 2: "Talk 2 \u2014 Part-Time Job Rules" };
+const ASKER = { 1: 'A', 2: 'B' };
+const SEL_MAP = { 1: () => chat1Sel, 2: () => chat2Sel };
+
+function buildChat(num) {
+  const data = CHATS[num];
+  const containerId = 'chat'+num+'Container';
+  const instrId = 's'+(num+1)+'instr';
+  const prefix = 'c'+num;
+  const asker = ASKER[num];
+  const label = TALK_LABELS[num];
+
+  document.getElementById(instrId).innerHTML = partner === asker
+    ? `\ud83d\udcac <strong>${label}.</strong> You are asking the questions. Read your lines aloud. Listen to your partner's answers and fill in their blanks.`
+    : `\ud83d\udcac <strong>${label}.</strong> You are answering the questions. Read your lines aloud. Listen to your partner's questions and fill in their blanks.`;
+
+  if (document.getElementById(containerId).innerHTML) return;
+
+  let html = `<div class="chat-label">${label}</div>`;
+  data.forEach((line, i) => {
+    const content = renderLine(line, i, prefix, (spk) => spk === partner);
+    html += `
+      <div class="bubble-row ${line.speaker}">
+        <div class="bubble ${line.speaker}">
+          <div class="bubble-speaker ${line.speaker}">${line.speaker === 'A' ? 'Aya' : 'Ren'}</div>
+          ${content}
+        </div>
+      </div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+function onBlank(prefix, lineIdx, blankIdx, val) {
+  const key = `${lineIdx}_${blankIdx}`;
+  if (prefix === 'c1') chat1Sel[key] = val;
+  else if (prefix === 'c2') chat2Sel[key] = val;
+  else if (prefix === 'fix') fixSel[key] = val;
+  saveState();
+}
+function finishChat(num) {
+  const data = CHATS[num];
+  const sel = SEL_MAP[num]();
+  let missing = false;
+  data.forEach((line, i) => {
+    if (line.speaker === partner) return;
+    line.blanks.forEach((_, bi) => { if (!sel[`${i}_${bi}`]) missing = true; });
+  });
+  if (missing) { alert('Please fill in all the blanks you can hear.'); return; }
+  goTo(num === 1 ? 3 : 4);
+}
+
+function buildFix() {
+  if (document.getElementById('fixContainer').innerHTML) return;
+  let html = `<div class="chat-label">Yuto &amp; Sakura \u2014 Exam Rules</div>`;
+  fixChat.forEach((line, i) => {
+    const content = renderLine(line, i, 'fix', () => false);
+    html += `
+      <div class="bubble-row ${line.speaker}">
+        <div class="bubble ${line.speaker}">
+          <div class="bubble-speaker ${line.speaker}">${line.speaker}</div>
+          ${content}
+        </div>
+      </div>`;
+  });
+  document.getElementById('fixContainer').innerHTML = html;
+}
+
+function submitAll() {
+  let missing = false;
+  fixChat.forEach((line,i) => { line.blanks.forEach((_,bi) => { if (!fixSel[`${i}_${bi}`]) missing = true; }); });
+  if (missing) { alert('Please fill in every blank in the Yuto & Sakura conversation.'); return; }
+  locked = true;
+
+  const review = [];
+
+  function scoreChat(data, sel, prefix, label, restrictToListener) {
+    let score = 0;
+    data.forEach((line,i) => {
+      if (restrictToListener && line.speaker === partner) return;
+      line.blanks.forEach((b, bi) => {
+        const key = `${i}_${bi}`;
+        const chosen = sel[key];
+        const ok = chosen === b.correct;
+        if (ok) score++;
+        const el = document.getElementById(`${prefix}_${key}`);
+        if (el) el.className = 'blank-sel ' + (ok ? 'correct' : 'wrong');
+        review.push({ label: `${label} \u2014 ${line.speaker}'s line ${i+1}`, chosen, ok, correct: b.correct });
+      });
+    });
+    return score;
+  }
+
+  function talkMaxForPartner(data) {
+    return data.reduce((sum, line) => line.speaker === partner ? sum : sum + line.blanks.length, 0);
+  }
+
+  const c1Score = scoreChat(chat1, chat1Sel, 'c1', 'Talk 1', true);
+  const c2Score = scoreChat(chat2, chat2Sel, 'c2', 'Talk 2', true);
+  const fixScore = scoreChat(fixChat, fixSel, 'fix', 'Fix It', false);
+
+  const c1Max = talkMaxForPartner(chat1);
+  const c2Max = talkMaxForPartner(chat2);
+  const fixMax = 16;
+  const totalMax = c1Max + c2Max + fixMax;
+
+  const total = c1Score + c2Score + fixScore;
+  const pct = Math.round(total/totalMax*100);
+
+  document.getElementById('totalNum').textContent = total + '/' + totalMax;
+  document.getElementById('totalDenom').textContent = 'out of ' + totalMax;
+  document.getElementById('c1Num').textContent = c1Score;
+  document.getElementById('c1Denom').textContent = '/' + c1Max;
+  document.getElementById('c2Num').textContent = c2Score;
+  document.getElementById('c2Denom').textContent = '/' + c2Max;
+  document.getElementById('fixNum').textContent = fixScore;
+
+  document.getElementById('reviewList').innerHTML = review.map(r => `
+    <div class="review-row">
+      <div class="review-num ${r.ok?'rn-ok':'rn-bad'}">${r.ok?'\u2713':'\u2717'}</div>
+      <div class="review-body">
+        <div class="review-label">${r.label}</div>
+        <div class="review-answer ${r.ok?'rev-ok':'rev-bad'}">Your answer: ${r.chosen || '\u2014'}</div>
+        ${!r.ok?`<div class="review-correct">Correct: <span>${r.correct}</span></div>`:''}
+      </div>
+    </div>`).join('');
+
+  goTo(5);
+  clearState();
+  logToSheets(c1Score, c2Score, fixScore, total, totalMax, c1Max, c2Max, pct, review);
+}
+
+function logToSheets(c1Score, c2Score, fixScore, total, totalMax, c1Max, c2Max, pct, review) {
+  if (!SHEET_URL || SHEET_URL === 'PASTE_URL_HERE') {
+    document.getElementById('sheetStatus').textContent = '\u26a0\ufe0f No gradebook URL set.';
+    return;
+  }
+  document.getElementById('sheetStatus').textContent = '\u23f3 Saving to gradebook\u2026';
+  const name = document.getElementById('studentName').value.trim();
+  const num  = document.getElementById('studentNumber').value.trim();
+  const detail = review.map(r => `${r.label}:${r.chosen||'\u2014'}(${r.ok?'\u2713':'\u2717'})`).join(' | ');
+
+  const payload = JSON.stringify({
+    studentNumber: num, studentName: name, partner,
+    score: total + '/' + totalMax, percent: pct,
+    talk1Score: c1Score + '/' + c1Max, talk2Score: c2Score + '/' + c2Max, fixScore: fixScore + '/16',
+    response: detail
+  });
+
+  const form = document.createElement('form');
+  form.method = 'POST'; form.action = SHEET_URL; form.target = 'hidden_iframe'; form.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'hidden'; input.name = 'data'; input.value = payload;
+  form.appendChild(input);
+  const iframe = document.createElement('iframe');
+  iframe.name = 'hidden_iframe'; iframe.style.display = 'none';
+  iframe.onload = () => { document.getElementById('sheetStatus').textContent = '\u2705 Saved to gradebook.'; };
+  document.body.appendChild(iframe);
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(() => {
+    const st = document.getElementById('sheetStatus');
+    if (st.textContent.includes('\u23f3')) st.textContent = '\u2705 Saved to gradebook.';
+  }, 3000);
+}
+
+window.addEventListener('load', () => {
+  const state = loadState();
+  if (state && state.currentScreen > 1) restoreState(state);
+});
+</script>
+</body>
+</html>
