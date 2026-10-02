@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>10 Years From Now — Future Wheel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#191933; --card:#2c2c54; --text:#f3f1fb; --muted:#a9a6c4;
+    --accent:#ffb84d; --accent-2:#ff6b6b; --good:#4dd4a4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(ellipse at 20% -10%, rgba(255,184,77,.12), transparent 55%),
+               radial-gradient(ellipse at 100% 110%, rgba(255,107,107,.12), transparent 55%),
+               var(--bg);
+    color:var(--text); font-family:'Inter',sans-serif; min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .display{font-family:'Fredoka',sans-serif;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+  .screen{display:none;flex:1;flex-direction:column;align-items:center;padding:28px 20px;text-align:center;}
+  .screen.active{display:flex;}
+
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+  h1.title{font-size:clamp(24px,7vw,32px);margin:0 0 10px;line-height:1.15;}
+  .subtitle{color:var(--muted);font-size:14px;max-width:360px;line-height:1.55;margin-bottom:20px;}
+
+  .role-grid{display:flex;flex-direction:column;gap:14px;width:100%;max-width:300px;margin-bottom:10px;}
+  .role-btn{
+    background:var(--card);border:1px solid #3d3d72;border-radius:12px;padding:18px;color:var(--text);
+    font-family:'Fredoka',sans-serif;font-size:18px;cursor:pointer;
+  }
+  .role-btn:active{background:#3a3a72;}
+  .reset-link{background:none;border:none;color:#6a6a96;font-size:12px;text-decoration:underline;cursor:pointer;margin-top:18px;}
+
+  .primary-btn{
+    background:var(--accent);color:#2a1a00;border:none;border-radius:10px;padding:14px 20px;
+    font-size:16px;font-weight:700;cursor:pointer;width:100%;max-width:320px;box-shadow:0 6px 0 #c6872b;
+  }
+  .primary-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c6872b;}
+  .primary-btn:disabled{opacity:.4;box-shadow:none;cursor:default;}
+
+  .turn-badge{
+    display:inline-block;background:var(--card);border:1px solid #3d3d72;border-radius:999px;
+    padding:6px 16px;font-size:13px;color:var(--accent);margin-bottom:14px;font-weight:700;
+  }
+  .you-tag{font-size:11px;color:var(--muted);margin-bottom:4px;}
+
+  .wheel-wrap{position:relative;width:min(84vw,310px);height:min(84vw,310px);margin:4px auto 20px;}
+  .pointer{
+    position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+    width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;
+    border-top:22px solid var(--accent-2);z-index:5;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));
+  }
+  #wheelSvg{width:100%;height:100%;}
+  .hub{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:46px;height:46px;border-radius:50%;background:var(--card);border:3px solid var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:18px;z-index:4;
+  }
+
+  .status-box{
+    background:var(--card);border-radius:12px;padding:16px 18px;margin-bottom:16px;width:100%;max-width:320px;
+  }
+  .status-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+  .status-value{font-size:20px;font-weight:700;color:var(--accent);}
+  .status-sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5;}
+
+  .listen-icon{font-size:48px;margin:6px 0;}
+
+  .question-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;margin:10px 0 16px;}
+  .question-opt{
+    background:var(--card);border:1px solid #3d3d72;border-radius:10px;padding:14px 16px;
+    font-size:15px;text-align:left;color:var(--text);cursor:pointer;position:relative;
+  }
+  .question-opt:active{background:#3a3a72;}
+  .question-opt.used::after{
+    content:"asked before";position:absolute;top:8px;right:10px;font-size:9.5px;color:var(--good);
+    text-transform:uppercase;letter-spacing:.04em;
+  }
+  .question-opt.custom{border-style:dashed;border-color:var(--accent);color:var(--accent);font-weight:700;text-align:center;}
+
+  .custom-box{width:100%;max-width:320px;text-align:left;margin-bottom:16px;}
+  .custom-box textarea{
+    width:100%;min-height:70px;border-radius:8px;border:1px solid #3d3d72;background:#1f1f3f;color:var(--text);
+    padding:10px;font-family:'Inter',sans-serif;font-size:14.5px;resize:vertical;
+  }
+
+  .confirm-q{font-size:16px;font-style:italic;color:var(--accent);margin-top:4px;}
+  .round-counter{position:fixed;top:14px;right:16px;font-size:11px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ROLE SELECT -->
+  <section id="screen-role" class="screen active">
+    <div class="eyebrow">Future Tense · "Will"</div>
+    <h1 class="title display">10 Years From Now</h1>
+    <p class="subtitle">Two phones, one wheel. Spin to find out what you'll be asked about — your partner picks the question, you answer blind using "will."</p>
+    <div class="role-grid">
+      <button class="role-btn" onclick="joinAs('A')">I'm Student A</button>
+      <button class="role-btn" onclick="joinAs('B')">I'm Student B</button>
+    </div>
+    <button class="reset-link" onclick="resetGame()">Reset game (start fresh for a new pair)</button>
+  </section>
+
+  <!-- MAIN GAME -->
+  <section id="screen-game" class="screen">
+    <div class="round-counter" id="roundCounter"></div>
+    <div class="you-tag" id="youTag"></div>
+    <div class="turn-badge" id="turnBadge"></div>
+    <h1 class="title display" id="headline">Spin the Wheel!</h1>
+    <p class="subtitle" id="subline" style="display:none;"></p>
+
+    <div class="wheel-wrap" id="wheelWrap">
+      <div class="pointer"></div>
+      <div class="hub">🎯</div>
+      <svg id="wheelSvg" viewBox="0 0 300 300"></svg>
+    </div>
+
+    <div class="status-box" id="statusBox" style="display:none;">
+      <div class="status-label" id="statusLabel"></div>
+      <div class="status-value" id="statusValue"></div>
+      <div class="status-sub" id="statusSub"></div>
+    </div>
+
+    <div class="listen-icon" id="listenIcon" style="display:none;">🎧</div>
+
+    <button class="primary-btn" id="spinBtn" style="display:none;" onclick="doSpin()">🎡 Spin</button>
+    <button class="primary-btn" id="seeQuestionsBtn" style="display:none;" onclick="showQuestions()">See My Questions →</button>
+
+    <div class="question-list" id="questionList" style="display:none;"></div>
+
+    <div class="custom-box" id="customBox" style="display:none;">
+      <textarea id="customInput" placeholder="Type your own question using 'will'..."></textarea>
+      <button class="primary-btn" style="margin-top:10px;" onclick="submitCustomQuestion()">Ask This Question</button>
+    </div>
+
+    <div class="status-box" id="confirmBox" style="display:none;">
+      <div class="status-label">You asked</div>
+      <div class="confirm-q" id="confirmQText"></div>
+    </div>
+
+    <button class="primary-btn" id="nextTurnBtn" style="display:none;" onclick="nextTurn()">Next Turn →</button>
+  </section>
+
+</div>
+
+<script>
+/* ================= DATA ================= */
+const CATEGORIES = [
+  { name: "Career", short: "Career", questions: [
+    "What kind of job will you have?",
+    "Where will you work?",
+    "Will you have a full-time job?"
+  ]},
+  { name: "Home & Independence", short: "Home", questions: [
+    "Where will you live?",
+    "Who will you live with?",
+    "Will you still live with your parents?"
+  ]},
+  { name: "Family", short: "Family", questions: [
+    "Will you be married?",
+    "How many children will you have?",
+    "How often will you see your parents?"
+  ]},
+  { name: "Location", short: "Location", questions: [
+    "What city or country will you live in?",
+    "Will you still live in this city?",
+    "Will your hometown be different in 10 years?"
+  ]},
+  { name: "Travel", short: "Travel", questions: [
+    "How many countries will you visit?",
+    "Where will you go on your next big trip?",
+    "Will you travel for work?"
+  ]},
+  { name: "Transportation", short: "Transport", questions: [
+    "How will you get to work?",
+    "Will you have a driver's license?",
+    "Will you own a car?"
+  ]},
+  { name: "Technology", short: "Tech", questions: [
+    "What new technology will you use?",
+    "Will you use AI at your job every day?",
+    "Will you still use the same social media apps you use now?"
+  ]},
+  { name: "Lifestyle & Hobbies", short: "Hobbies", questions: [
+    "What will you do on weekends?",
+    "Will you have a new hobby?",
+    "Will you still do the club activity or sport you do now?"
+  ]},
+  { name: "Health & Daily Life", short: "Health", questions: [
+    "How will you stay healthy?",
+    "Will you cook your own meals?",
+    "Will you get enough sleep?"
+  ]},
+  { name: "English & Study", short: "Study", questions: [
+    "How will you use English in your daily life?",
+    "Will you still study English?",
+    "Will you go to graduate school?"
+  ]}
+];
+const N = CATEGORIES.length;
+const SLICE = 360 / N;
+const STORAGE_KEY = "futureWheelState_v1";
+
+/* ================= LOCAL (per-device) STATE ================= */
+let myRole = null;          // 'A' or 'B'
+let lastSeenSpinId = -1;    // to avoid re-animating the same spin
+let pollTimer = null;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function defaultState(){
+  return {
+    round: 1,
+    spinnerRole: 'A',
+    phase: 'idle',           // idle -> resolved -> asked -> (next turn resets to idle)
+    categoryIndex: null,
+    spinId: 0,
+    totalRotation: 0,
+    bag: shuffle([...Array(N).keys()]),
+    questionText: null,
+    isCustom: false,
+    usedQuestions: {}
+  };
+}
+
+/* ================= STORAGE HELPERS ================= */
+async function getState(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, true);
+    return res ? JSON.parse(res.value) : null;
+  }catch(e){
+    return null;
+  }
+}
+async function setState(state){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
+  }catch(e){
+    console.error('storage set failed', e);
+  }
+}
+
+/* ================= JOIN / RESET ================= */
+async function joinAs(role){
+  myRole = role;
+  let state = await getState();
+  if(!state){
+    state = defaultState();
+    await setState(state);
+  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-game').classList.add('active');
+  buildWheel();
+  lastSeenSpinId = state.spinId; // don't re-animate a spin that already happened before we joined
+  animateToRotation(state.totalRotation, true);
+  renderPhase(state);
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(pollLoop, 1100);
+}
+
+async function resetGame(){
+  try{ await window.storage.delete(STORAGE_KEY, true); }catch(e){}
+  location.reload();
+}
+
+/* ================= POLLING ================= */
+async function pollLoop(){
+  const state = await getState();
+  if(!state) return;
+
+  if(state.spinId !== lastSeenSpinId){
+    lastSeenSpinId = state.spinId;
+    animateToRotation(state.totalRotation, false);
+    resetPanels();
+    document.getElementById('turnBadge').textContent = `🎡 ${roleName(state.spinnerRole)}'s Spin`;
+    document.getElementById('headline').textContent = 'Spinning...';
+    setTimeout(() => renderPhase(state), 4100);
+    return;
+  }
+  renderPhase(state);
+}
+
+/* ================= WHEEL BUILD ================= */
+function buildWheel(){
+  const svg = document.getElementById('wheelSvg');
+  const cx = 150, cy = 150, r = 148;
+  let html = '';
+  CATEGORIES.forEach((cat, i) => {
+    const startAngle = i * SLICE;
+    const endAngle = startAngle + SLICE;
+    const x1 = cx + r * Math.sin(startAngle * Math.PI/180);
+    const y1 = cy - r * Math.cos(startAngle * Math.PI/180);
+    const x2 = cx + r * Math.sin(endAngle * Math.PI/180);
+    const y2 = cy - r * Math.cos(endAngle * Math.PI/180);
+    const largeArc = SLICE > 180 ? 1 : 0;
+    const color = `hsl(${Math.round(i * (360/N))}, 60%, 48%)`;
+    html += `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${color}" stroke="#191933" stroke-width="2"/>`;
+
+    const midAngle = startAngle + SLICE/2;
+    const labelR = r * 0.66;
+    const lx = cx + labelR * Math.sin(midAngle * Math.PI/180);
+    const ly = cy - labelR * Math.cos(midAngle * Math.PI/180);
+    const label = cat.short;
+    const fontSize = label.length > 7 ? 11.5 : 13.5;
+    html += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" fill="#fff" font-size="${fontSize}" font-weight="700"
+      font-family="Inter, sans-serif" text-anchor="middle" dominant-baseline="middle"
+      transform="rotate(${midAngle.toFixed(2)}, ${lx.toFixed(2)}, ${ly.toFixed(2)})">${label}</text>`;
+  });
+  svg.innerHTML = html;
+}
+
+function animateToRotation(deg, instant){
+  const svg = document.getElementById('wheelSvg');
+  if(instant){
+    svg.style.transition = 'none';
+    svg.style.transform = `rotate(${deg}deg)`;
+    void svg.offsetWidth; // force reflow
+    svg.style.transition = 'transform 4s cubic-bezier(.17,.67,.21,1)';
+  } else {
+    svg.style.transition = 'transform 4s cubic-bezier(.17,.67,.21,1)';
+    svg.style.transform = `rotate(${deg}deg)`;
+  }
+}
+
+/* ================= RENDER ================= */
+function askerRole(state){ return state.spinnerRole === 'A' ? 'B' : 'A'; }
+function roleName(r){ return r === 'A' ? 'Student A' : 'Student B'; }
+
+function resetPanels(){
+  document.getElementById('subline').style.display = 'none';
+  document.getElementById('statusBox').style.display = 'none';
+  document.getElementById('listenIcon').style.display = 'none';
+  document.getElementById('spinBtn').style.display = 'none';
+  document.getElementById('seeQuestionsBtn').style.display = 'none';
+  document.getElementById('questionList').style.display = 'none';
+  document.getElementById('customBox').style.display = 'none';
+  document.getElementById('confirmBox').style.display = 'none';
+  document.getElementById('nextTurnBtn').style.display = 'none';
+  document.getElementById('wheelWrap').style.display = 'block';
+}
+
+function renderPhase(state){
+  resetPanels();
+  document.getElementById('roundCounter').textContent = `Round ${state.round}`;
+  document.getElementById('youTag').textContent = `You are ${roleName(myRole)}`;
+
+  const iAmSpinner = (myRole === state.spinnerRole);
+  const asker = askerRole(state);
+  const iAmAsker = (myRole === asker);
+
+  document.getElementById('turnBadge').textContent = `🎡 ${roleName(state.spinnerRole)}'s Spin`;
+
+  if(state.phase === 'idle'){
+    document.getElementById('headline').textContent = iAmSpinner ? 'Your Turn to Spin!' : 'Waiting...';
+    if(iAmSpinner){
+      document.getElementById('spinBtn').style.display = 'block';
+    } else {
+      document.getElementById('subline').style.display = 'block';
+      document.getElementById('subline').textContent = `${roleName(state.spinnerRole)} is about to spin the wheel.`;
+    }
+    return;
+  }
+
+  if(state.phase === 'resolved'){
+    const cat = CATEGORIES[state.categoryIndex];
+    document.getElementById('headline').textContent = 'Landed!';
+    document.getElementById('statusBox').style.display = 'block';
+    document.getElementById('statusLabel').textContent = 'Category';
+    document.getElementById('statusValue').textContent = cat.name;
+
+    if(iAmAsker){
+      document.getElementById('statusSub').textContent = `Pick one question to ask ${roleName(state.spinnerRole)}.`;
+      document.getElementById('seeQuestionsBtn').style.display = 'block';
+    } else {
+      document.getElementById('statusSub').textContent = `${roleName(asker)} is choosing a question for you. Get ready to listen!`;
+      document.getElementById('listenIcon').style.display = 'block';
+    }
+    return;
+  }
+
+  if(state.phase === 'asked'){
+    const cat = CATEGORIES[state.categoryIndex];
+    document.getElementById('wheelWrap').style.display = 'none';
+    if(iAmAsker){
+      document.getElementById('headline').textContent = 'Ask This Now';
+      document.getElementById('confirmBox').style.display = 'block';
+      document.getElementById('confirmQText').textContent = `"${state.questionText}"`;
+      document.getElementById('nextTurnBtn').style.display = 'block';
+    } else {
+      document.getElementById('headline').textContent = 'Listen Carefully!';
+      document.getElementById('listenIcon').style.display = 'block';
+      document.getElementById('statusBox').style.display = 'block';
+      document.getElementById('statusLabel').textContent = 'Category';
+      document.getElementById('statusValue').textContent = cat.name;
+      document.getElementById('statusSub').textContent = `${roleName(asker)} is asking you a question. Answer using "will"!`;
+    }
+    return;
+  }
+}
+
+/* ================= SPIN ================= */
+async function doSpin(){
+  document.getElementById('spinBtn').disabled = true;
+  let state = await getState();
+  if(!state || state.phase !== 'idle' || state.spinnerRole !== myRole){
+    document.getElementById('spinBtn').disabled = false;
+    return;
+  }
+
+  let bag = state.bag.slice();
+  if(bag.length === 0) bag = shuffle([...Array(N).keys()]);
+  const categoryIndex = bag.shift();
+
+  const targetCenterAngle = categoryIndex * SLICE + SLICE/2;
+  const jitter = (Math.random() - 0.5) * (SLICE * 0.5);
+  const targetAngle = (targetCenterAngle + jitter + 360) % 360;
+  const rTargetMod = (360 - targetAngle) % 360;
+  const currentMod = ((state.totalRotation % 360) + 360) % 360;
+  const forward = ((rTargetMod - currentMod) + 360) % 360;
+  const newTotalRotation = state.totalRotation + (5 * 360) + forward;
+
+  const newState = {
+    ...state,
+    bag,
+    categoryIndex,
+    totalRotation: newTotalRotation,
+    spinId: state.spinId + 1,
+    phase: 'resolved',
+    questionText: null,
+    isCustom: false
+  };
+
+  lastSeenSpinId = newState.spinId; // mark locally so our own poll doesn't re-trigger
+  animateToRotation(newTotalRotation, false);
+  resetPanels();
+  document.getElementById('headline').textContent = 'Spinning...';
+  document.getElementById('turnBadge').textContent = `🎡 ${roleName(myRole)}'s Spin`;
+
+  await setState(newState);
+
+  setTimeout(() => renderPhase(newState), 4100);
+}
+
+/* ================= QUESTIONS ================= */
+async function showQuestions(){
+  const state = await getState();
+  if(!state) return;
+  resetPanels();
+  document.getElementById('wheelWrap').style.display = 'none';
+  document.getElementById('headline').textContent = 'Choose ONE Question';
+  document.getElementById('subline').style.display = 'block';
+  document.getElementById('subline').textContent = `Category: ${CATEGORIES[state.categoryIndex].name.toUpperCase()}`;
+
+  const used = (state.usedQuestions && state.usedQuestions[state.categoryIndex]) || [];
+  const list = document.getElementById('questionList');
+  list.innerHTML = '';
+  CATEGORIES[state.categoryIndex].questions.forEach((q, qi) => {
+    const btn = document.createElement('button');
+    btn.className = 'question-opt' + (used.includes(qi) ? ' used' : '');
+    btn.textContent = q;
+    btn.onclick = () => chooseQuestion(qi, q, false);
+    list.appendChild(btn);
+  });
+  const customBtn = document.createElement('button');
+  customBtn.className = 'question-opt custom';
+  customBtn.textContent = '+ Make your own question!';
+  customBtn.onclick = () => {
+    list.style.display = 'none';
+    document.getElementById('customBox').style.display = 'block';
+  };
+  list.appendChild(customBtn);
+
+  list.style.display = 'flex';
+}
+
+async function chooseQuestion(qi, qtext, isCustom){
+  const state = await getState();
+  if(!state) return;
+
+  const usedQuestions = { ...(state.usedQuestions || {}) };
+  if(!isCustom){
+    const used = usedQuestions[state.categoryIndex] ? usedQuestions[state.categoryIndex].slice() : [];
+    if(!used.includes(qi)) used.push(qi);
+    usedQuestions[state.categoryIndex] = used;
+  }
+
+  const newState = { ...state, phase: 'asked', questionText: qtext, isCustom, usedQuestions };
+  await setState(newState);
+  renderPhase(newState);
+}
+
+function submitCustomQuestion(){
+  const text = document.getElementById('customInput').value.trim();
+  if(!text){ return; }
+  chooseQuestion(-1, text, true);
+}
+
+/* ================= NEXT TURN ================= */
+async function nextTurn(){
+  const state = await getState();
+  if(!state) return;
+  const newState = {
+    ...state,
+    round: state.round + 1,
+    spinnerRole: state.spinnerRole === 'A' ? 'B' : 'A',
+    phase: 'idle',
+    categoryIndex: null,
+    questionText: null,
+    isCustom: false
+  };
+  await setState(newState);
+  renderPhase(newState);
+}
+</script>
+</body>
+</html>
