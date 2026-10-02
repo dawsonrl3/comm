@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>10 Years From Now</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#191933; --card:#2c2c54; --text:#f3f1fb; --muted:#a9a6c4;
+    --accent:#ffb84d; --accent-2:#ff6b6b; --good:#4dd4a4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(ellipse at 20% -10%, rgba(255,184,77,.12), transparent 55%),
+               radial-gradient(ellipse at 100% 110%, rgba(255,107,107,.12), transparent 55%),
+               var(--bg);
+    color:var(--text); font-family:'Inter',sans-serif; min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .display{font-family:'Fredoka',sans-serif;}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+  .screen{display:none;flex:1;flex-direction:column;align-items:center;padding:28px 20px;text-align:center;}
+  .screen.active{display:flex;}
+
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+  h1.title{font-size:clamp(24px,7vw,32px);margin:0 0 10px;line-height:1.15;}
+  .subtitle{color:var(--muted);font-size:14px;max-width:360px;line-height:1.55;margin-bottom:22px;}
+
+  .home-grid{display:flex;flex-direction:column;gap:16px;width:100%;max-width:320px;}
+  .home-btn{
+    background:var(--card);border:1px solid #3d3d72;border-radius:14px;padding:22px 18px;color:var(--text);
+    cursor:pointer;text-align:left;display:flex;align-items:center;gap:16px;
+  }
+  .home-btn:active{background:#3a3a72;}
+  .home-btn .icon{font-size:30px;flex:0 0 auto;}
+  .home-btn .label{font-family:'Fredoka',sans-serif;font-size:17px;margin-bottom:3px;}
+  .home-btn .desc{font-size:12.5px;color:var(--muted);}
+
+  .back-link{background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer;margin-bottom:18px;align-self:flex-start;}
+
+  .primary-btn{
+    background:var(--accent);color:#2a1a00;border:none;border-radius:10px;padding:14px 20px;
+    font-size:16px;font-weight:700;cursor:pointer;width:100%;max-width:320px;box-shadow:0 6px 0 #c6872b;
+  }
+  .primary-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c6872b;}
+  .primary-btn:disabled{opacity:.4;box-shadow:none;cursor:default;}
+  .ghost-btn{
+    background:transparent;border:1px solid #4a4a84;color:var(--muted);border-radius:10px;
+    padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;width:100%;max-width:320px;margin-top:10px;
+  }
+
+  /* ---- WHEEL ---- */
+  .wheel-wrap{position:relative;width:min(84vw,310px);height:min(84vw,310px);margin:4px auto 20px;}
+  .pointer{
+    position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+    width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;
+    border-top:22px solid var(--accent-2);z-index:5;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));
+  }
+  #wheelSvg{width:100%;height:100%;transition:transform 4s cubic-bezier(.17,.67,.21,1);}
+  .hub{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:46px;height:46px;border-radius:50%;background:var(--card);border:3px solid var(--accent);
+    display:flex;align-items:center;justify-content:center;font-size:18px;z-index:4;
+  }
+
+  .status-box{
+    background:var(--card);border-radius:12px;padding:16px 18px;margin-bottom:16px;width:100%;max-width:320px;display:none;
+  }
+  .status-box.show{display:block;}
+  .status-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+  .status-value{font-size:22px;font-weight:700;color:var(--accent);}
+
+  /* ---- CATEGORY GRID ---- */
+  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:360px;margin-bottom:10px;}
+  .cat-tile{
+    border:none;border-radius:10px;padding:16px 8px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .cat-tile:active{filter:brightness(.85);}
+
+  /* ---- QUESTION LIST ---- */
+  .question-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;margin:6px 0 16px;}
+  .question-opt{
+    background:var(--card);border:1px solid #3d3d72;border-radius:10px;padding:14px 16px;
+    font-size:15px;text-align:left;color:var(--text);cursor:pointer;position:relative;
+  }
+  .question-opt:active{background:#3a3a72;}
+  .question-opt.used::after{
+    content:"asked before";position:absolute;top:8px;right:10px;font-size:9.5px;color:var(--good);
+    text-transform:uppercase;letter-spacing:.04em;
+  }
+  .question-opt.custom{border-style:dashed;border-color:var(--accent);color:var(--accent);font-weight:700;text-align:center;}
+
+  .custom-box{width:100%;max-width:320px;text-align:left;margin-bottom:16px;}
+  .custom-box textarea{
+    width:100%;min-height:70px;border-radius:8px;border:1px solid #3d3d72;background:#1f1f3f;color:var(--text);
+    padding:10px;font-family:'Inter',sans-serif;font-size:14.5px;resize:vertical;
+  }
+
+  .asked-banner{
+    background:var(--card);border-radius:12px;padding:18px;width:100%;max-width:320px;margin-bottom:16px;
+  }
+  .asked-banner .q{font-size:17px;font-style:italic;color:var(--accent);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <section id="screen-home" class="screen active">
+    <div class="eyebrow">Future Tense · "Will"</div>
+    <h1 class="title display">10 Years From Now</h1>
+    <p class="subtitle">Everyone uses their own phone — nothing to connect or sync. When it's your turn to spin, say the category out loud. When it's your turn to ask, tap that same category below.</p>
+    <div class="home-grid">
+      <button class="home-btn" onclick="goTo('screen-wheel')">
+        <div class="icon">🎡</div>
+        <div>
+          <div class="label display">Spin the Wheel</div>
+          <div class="desc">Use this when it's YOUR turn to spin.</div>
+        </div>
+      </button>
+      <button class="home-btn" onclick="goTo('screen-categories'); showCategoryGrid();">
+        <div class="icon">📋</div>
+        <div>
+          <div class="label display">Pick a Category</div>
+          <div class="desc">Use this when your partner just spun and said a category.</div>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <!-- WHEEL SCREEN -->
+  <section id="screen-wheel" class="screen">
+    <button class="back-link" onclick="goTo('screen-home')">← Home</button>
+    <h1 class="title display" id="wheelHeadline">Spin the Wheel!</h1>
+    <p class="subtitle">Tap spin, then say the category out loud so your partner can find it on their own phone.</p>
+
+    <div class="wheel-wrap">
+      <div class="pointer"></div>
+      <div class="hub">🎯</div>
+      <svg id="wheelSvg" viewBox="0 0 300 300"></svg>
+    </div>
+
+    <div class="status-box" id="landedBox">
+      <div class="status-label">You landed on</div>
+      <div class="status-value" id="landedCatText"></div>
+    </div>
+
+    <button class="primary-btn" id="spinBtn" onclick="spinWheel()">🎡 Spin</button>
+    <button class="ghost-btn" id="spinAgainBtn" style="display:none;" onclick="resetWheelScreen()">Spin Again Next Turn</button>
+  </section>
+
+  <!-- CATEGORIES SCREEN -->
+  <section id="screen-categories" class="screen">
+    <button class="back-link" onclick="goTo('screen-home')">← Home</button>
+    <div id="categoriesInner"></div>
+  </section>
+
+</div>
+
+<script>
+/* ================= DATA ================= */
+const CATEGORIES = [
+  { name: "Career", short: "Career", questions: [
+    "What kind of job will you have?",
+    "Where will you work?",
+    "Will you have a full-time job?"
+  ]},
+  { name: "Home & Independence", short: "Home", questions: [
+    "Where will you live?",
+    "Who will you live with?",
+    "Will you still live with your parents?"
+  ]},
+  { name: "Family", short: "Family", questions: [
+    "Will you be married?",
+    "How many children will you have?",
+    "How often will you see your parents?"
+  ]},
+  { name: "Location", short: "Location", questions: [
+    "What city or country will you live in?",
+    "Will you still live in this city?",
+    "Will your hometown be different in 10 years?"
+  ]},
+  { name: "Travel", short: "Travel", questions: [
+    "How many countries will you visit?",
+    "Where will you go on your next big trip?",
+    "Will you travel for work?"
+  ]},
+  { name: "Transportation", short: "Transport", questions: [
+    "How will you get to work?",
+    "Will you have a driver's license?",
+    "Will you own a car?"
+  ]},
+  { name: "Technology", short: "Tech", questions: [
+    "What new technology will you use?",
+    "Will you use AI at your job every day?",
+    "Will you still use the same social media apps you use now?"
+  ]},
+  { name: "Lifestyle & Hobbies", short: "Hobbies", questions: [
+    "What will you do on weekends?",
+    "Will you have a new hobby?",
+    "Will you still do the club activity or sport you do now?"
+  ]},
+  { name: "Health & Daily Life", short: "Health", questions: [
+    "How will you stay healthy?",
+    "Will you cook your own meals?",
+    "Will you get enough sleep?"
+  ]},
+  { name: "English & Study", short: "Study", questions: [
+    "How will you use English in your daily life?",
+    "Will you still study English?",
+    "Will you go to graduate school?"
+  ]}
+];
+const N = CATEGORIES.length;
+const SLICE = 360 / N;
+
+/* ================= LOCAL STATE (this device only) ================= */
+let bag = shuffle([...Array(N).keys()]);   // wheel draws without repeats until exhausted
+let totalRotation = 0;
+let usedQuestions = {};                     // { categoryIndex: Set-like array of question indices asked on THIS phone }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+/* ================= NAV ================= */
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ================= WHEEL ================= */
+function buildWheel(){
+  const svg = document.getElementById('wheelSvg');
+  if(svg.dataset.built) return;
+  const cx = 150, cy = 150, r = 148;
+  let html = '';
+  CATEGORIES.forEach((cat, i) => {
+    const startAngle = i * SLICE;
+    const endAngle = startAngle + SLICE;
+    const x1 = cx + r * Math.sin(startAngle * Math.PI/180);
+    const y1 = cy - r * Math.cos(startAngle * Math.PI/180);
+    const x2 = cx + r * Math.sin(endAngle * Math.PI/180);
+    const y2 = cy - r * Math.cos(endAngle * Math.PI/180);
+    const largeArc = SLICE > 180 ? 1 : 0;
+    const color = `hsl(${Math.round(i * (360/N))}, 60%, 48%)`;
+    html += `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${color}" stroke="#191933" stroke-width="2"/>`;
+
+    const midAngle = startAngle + SLICE/2;
+    const labelR = r * 0.66;
+    const lx = cx + labelR * Math.sin(midAngle * Math.PI/180);
+    const ly = cy - labelR * Math.cos(midAngle * Math.PI/180);
+    const label = cat.short;
+    const fontSize = label.length > 7 ? 11.5 : 13.5;
+    html += `<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" fill="#fff" font-size="${fontSize}" font-weight="700"
+      font-family="Inter, sans-serif" text-anchor="middle" dominant-baseline="middle"
+      transform="rotate(${midAngle.toFixed(2)}, ${lx.toFixed(2)}, ${ly.toFixed(2)})">${label}</text>`;
+  });
+  svg.innerHTML = html;
+  svg.dataset.built = "1";
+}
+buildWheel();
+
+function spinWheel(){
+  document.getElementById('spinBtn').disabled = true;
+
+  if(bag.length === 0) bag = shuffle([...Array(N).keys()]);
+  const categoryIndex = bag.shift();
+
+  const targetCenterAngle = categoryIndex * SLICE + SLICE/2;
+  const jitter = (Math.random() - 0.5) * (SLICE * 0.5);
+  const targetAngle = (targetCenterAngle + jitter + 360) % 360;
+  const rTargetMod = (360 - targetAngle) % 360;
+  const currentMod = ((totalRotation % 360) + 360) % 360;
+  const forward = ((rTargetMod - currentMod) + 360) % 360;
+  totalRotation = totalRotation + (5 * 360) + forward;
+
+  const svg = document.getElementById('wheelSvg');
+  svg.style.transform = `rotate(${totalRotation}deg)`;
+
+  document.getElementById('wheelHeadline').textContent = 'Spinning...';
+
+  setTimeout(() => {
+    document.getElementById('wheelHeadline').textContent = 'Landed!';
+    document.getElementById('landedCatText').textContent = CATEGORIES[categoryIndex].name;
+    document.getElementById('landedBox').classList.add('show');
+    document.getElementById('spinBtn').style.display = 'none';
+    document.getElementById('spinAgainBtn').style.display = 'block';
+  }, 4100);
+}
+
+function resetWheelScreen(){
+  document.getElementById('wheelHeadline').textContent = 'Spin the Wheel!';
+  document.getElementById('landedBox').classList.remove('show');
+  document.getElementById('spinBtn').style.display = 'block';
+  document.getElementById('spinBtn').disabled = false;
+  document.getElementById('spinAgainBtn').style.display = 'none';
+}
+
+/* ================= CATEGORIES ================= */
+function showCategoryGrid(){
+  const inner = document.getElementById('categoriesInner');
+  let html = `
+    <div class="eyebrow">Which Category Did Your Partner Spin?</div>
+    <h1 class="title display">Tap It Below</h1>
+    <p class="subtitle">You'll see 3 questions — plus the option to write your own.</p>
+    <div class="cat-grid">
+  `;
+  CATEGORIES.forEach((cat, i) => {
+    const color = `hsl(${Math.round(i * (360/N))}, 55%, 42%)`;
+    html += `<button class="cat-tile" style="background:${color}" onclick="showQuestionsFor(${i})">${cat.name}</button>`;
+  });
+  html += `</div>`;
+  inner.innerHTML = html;
+}
+
+function showQuestionsFor(catIndex){
+  const cat = CATEGORIES[catIndex];
+  const used = usedQuestions[catIndex] || [];
+  const inner = document.getElementById('categoriesInner');
+
+  let html = `
+    <div class="eyebrow">${cat.name.toUpperCase()}</div>
+    <h1 class="title display">Choose ONE Question</h1>
+    <div class="question-list">
+  `;
+  cat.questions.forEach((q, qi) => {
+    html += `<button class="question-opt${used.includes(qi) ? ' used' : ''}" onclick="askQuestion(${catIndex}, ${qi}, this.textContent, false)">${q}</button>`;
+  });
+  html += `<button class="question-opt custom" onclick="showCustomInput(${catIndex})">+ Make your own question!</button>`;
+  html += `</div>`;
+  html += `<div id="customArea"></div>`;
+  html += `<div id="askedArea"></div>`;
+  html += `<button class="ghost-btn" onclick="showCategoryGrid()">← Back to Categories</button>`;
+  inner.innerHTML = html;
+}
+
+function showCustomInput(catIndex){
+  const area = document.getElementById('customArea');
+  area.innerHTML = `
+    <div class="custom-box">
+      <textarea id="customText" placeholder="Type your own question using 'will'..."></textarea>
+      <button class="primary-btn" style="margin-top:10px;" onclick="submitCustom(${catIndex})">Ask This Question</button>
+    </div>
+  `;
+}
+
+function submitCustom(catIndex){
+  const text = document.getElementById('customText').value.trim();
+  if(!text) return;
+  askQuestion(catIndex, -1, text, true);
+}
+
+function askQuestion(catIndex, qIndex, qText, isCustom){
+  if(!isCustom){
+    if(!usedQuestions[catIndex]) usedQuestions[catIndex] = [];
+    if(!usedQuestions[catIndex].includes(qIndex)) usedQuestions[catIndex].push(qIndex);
+  }
+  const inner = document.getElementById('categoriesInner');
+  inner.innerHTML = `
+    <div class="eyebrow">${CATEGORIES[catIndex].name.toUpperCase()}</div>
+    <h1 class="title display">Ask This Now</h1>
+    <div class="asked-banner">
+      <div class="q">"${qText}"</div>
+    </div>
+    <p class="subtitle">Say it out loud. Your partner will answer using "will" — no peeking at their screen!</p>
+    <button class="primary-btn" onclick="showCategoryGrid()">Done — Back to Categories</button>
+    <button class="ghost-btn" onclick="goTo('screen-home')">← Home</button>
+  `;
+}
+</script>
+</body>
+</html>
