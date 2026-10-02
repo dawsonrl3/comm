@@ -27,15 +27,19 @@
 
   .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
   h1.title{font-size:clamp(24px,7vw,32px);margin:0 0 10px;line-height:1.15;}
-  .subtitle{color:var(--muted);font-size:14px;max-width:360px;line-height:1.55;margin-bottom:20px;}
+  .subtitle{color:var(--muted);font-size:14px;max-width:360px;line-height:1.55;margin-bottom:22px;}
 
-  .role-grid{display:flex;flex-direction:column;gap:14px;width:100%;max-width:300px;margin-bottom:10px;}
-  .role-btn{
-    background:var(--card);border:1px solid #3d3d72;border-radius:12px;padding:18px;color:var(--text);
-    font-family:'Fredoka',sans-serif;font-size:18px;cursor:pointer;
+  .home-grid{display:flex;flex-direction:column;gap:16px;width:100%;max-width:320px;}
+  .home-btn{
+    background:var(--card);border:1px solid #3d3d72;border-radius:14px;padding:22px 18px;color:var(--text);
+    cursor:pointer;text-align:left;display:flex;align-items:center;gap:16px;
   }
-  .role-btn:active{background:#3a3a72;}
-  .reset-link{background:none;border:none;color:#6a6a96;font-size:12px;text-decoration:underline;cursor:pointer;margin-top:18px;}
+  .home-btn:active{background:#3a3a72;}
+  .home-btn .icon{font-size:30px;flex:0 0 auto;}
+  .home-btn .label{font-family:'Fredoka',sans-serif;font-size:17px;margin-bottom:3px;}
+  .home-btn .desc{font-size:12.5px;color:var(--muted);}
+
+  .back-link{background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer;margin-bottom:18px;align-self:flex-start;}
 
   .primary-btn{
     background:var(--accent);color:#2a1a00;border:none;border-radius:10px;padding:14px 20px;
@@ -43,20 +47,19 @@
   }
   .primary-btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c6872b;}
   .primary-btn:disabled{opacity:.4;box-shadow:none;cursor:default;}
-
-  .turn-badge{
-    display:inline-block;background:var(--card);border:1px solid #3d3d72;border-radius:999px;
-    padding:6px 16px;font-size:13px;color:var(--accent);margin-bottom:14px;font-weight:700;
+  .ghost-btn{
+    background:transparent;border:1px solid #4a4a84;color:var(--muted);border-radius:10px;
+    padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;width:100%;max-width:320px;margin-top:10px;
   }
-  .you-tag{font-size:11px;color:var(--muted);margin-bottom:4px;}
 
+  /* ---- WHEEL ---- */
   .wheel-wrap{position:relative;width:min(84vw,310px);height:min(84vw,310px);margin:4px auto 20px;}
   .pointer{
     position:absolute;top:-6px;left:50%;transform:translateX(-50%);
     width:0;height:0;border-left:13px solid transparent;border-right:13px solid transparent;
     border-top:22px solid var(--accent-2);z-index:5;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));
   }
-  #wheelSvg{width:100%;height:100%;}
+  #wheelSvg{width:100%;height:100%;transition:transform 4s cubic-bezier(.17,.67,.21,1);}
   .hub{
     position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     width:46px;height:46px;border-radius:50%;background:var(--card);border:3px solid var(--accent);
@@ -64,15 +67,22 @@
   }
 
   .status-box{
-    background:var(--card);border-radius:12px;padding:16px 18px;margin-bottom:16px;width:100%;max-width:320px;
+    background:var(--card);border-radius:12px;padding:16px 18px;margin-bottom:16px;width:100%;max-width:320px;display:none;
   }
+  .status-box.show{display:block;}
   .status-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
-  .status-value{font-size:20px;font-weight:700;color:var(--accent);}
-  .status-sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .status-value{font-size:22px;font-weight:700;color:var(--accent);}
 
-  .listen-icon{font-size:48px;margin:6px 0;}
+  /* ---- CATEGORY GRID ---- */
+  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:360px;margin-bottom:10px;}
+  .cat-tile{
+    border:none;border-radius:10px;padding:16px 8px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .cat-tile:active{filter:brightness(.85);}
 
-  .question-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;margin:10px 0 16px;}
+  /* ---- QUESTION LIST ---- */
+  .question-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:12px;margin:6px 0 16px;}
   .question-opt{
     background:var(--card);border:1px solid #3d3d72;border-radius:10px;padding:14px 16px;
     font-size:15px;text-align:left;color:var(--text);cursor:pointer;position:relative;
@@ -90,63 +100,63 @@
     padding:10px;font-family:'Inter',sans-serif;font-size:14.5px;resize:vertical;
   }
 
-  .confirm-q{font-size:16px;font-style:italic;color:var(--accent);margin-top:4px;}
-  .round-counter{position:fixed;top:14px;right:16px;font-size:11px;color:var(--muted);}
+  .asked-banner{
+    background:var(--card);border-radius:12px;padding:18px;width:100%;max-width:320px;margin-bottom:16px;
+  }
+  .asked-banner .q{font-size:17px;font-style:italic;color:var(--accent);}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- ROLE SELECT -->
-  <section id="screen-role" class="screen active">
+  <!-- HOME -->
+  <section id="screen-home" class="screen active">
     <div class="eyebrow">Future Tense · "Will"</div>
     <h1 class="title display">10 Years From Now</h1>
-    <p class="subtitle">Two phones, one wheel. Spin to find out what you'll be asked about — your partner picks the question, you answer blind using "will."</p>
-    <div class="role-grid">
-      <button class="role-btn" onclick="joinAs('A')">I'm Student A</button>
-      <button class="role-btn" onclick="joinAs('B')">I'm Student B</button>
+    <p class="subtitle">Everyone uses their own phone — nothing to connect or sync. When it's your turn to spin, say the category out loud. When it's your turn to ask, tap that same category below.</p>
+    <div class="home-grid">
+      <button class="home-btn" onclick="goTo('screen-wheel')">
+        <div class="icon">🎡</div>
+        <div>
+          <div class="label display">Spin the Wheel</div>
+          <div class="desc">Use this when it's YOUR turn to spin.</div>
+        </div>
+      </button>
+      <button class="home-btn" onclick="goTo('screen-categories'); showCategoryGrid();">
+        <div class="icon">📋</div>
+        <div>
+          <div class="label display">Pick a Category</div>
+          <div class="desc">Use this when your partner just spun and said a category.</div>
+        </div>
+      </button>
     </div>
-    <button class="reset-link" onclick="resetGame()">Reset game (start fresh for a new pair)</button>
   </section>
 
-  <!-- MAIN GAME -->
-  <section id="screen-game" class="screen">
-    <div class="round-counter" id="roundCounter"></div>
-    <div class="you-tag" id="youTag"></div>
-    <div class="turn-badge" id="turnBadge"></div>
-    <h1 class="title display" id="headline">Spin the Wheel!</h1>
-    <p class="subtitle" id="subline" style="display:none;"></p>
+  <!-- WHEEL SCREEN -->
+  <section id="screen-wheel" class="screen">
+    <button class="back-link" onclick="goTo('screen-home')">← Home</button>
+    <h1 class="title display" id="wheelHeadline">Spin the Wheel!</h1>
+    <p class="subtitle">Tap spin, then say the category out loud so your partner can find it on their own phone.</p>
 
-    <div class="wheel-wrap" id="wheelWrap">
+    <div class="wheel-wrap">
       <div class="pointer"></div>
       <div class="hub">🎯</div>
       <svg id="wheelSvg" viewBox="0 0 300 300"></svg>
     </div>
 
-    <div class="status-box" id="statusBox" style="display:none;">
-      <div class="status-label" id="statusLabel"></div>
-      <div class="status-value" id="statusValue"></div>
-      <div class="status-sub" id="statusSub"></div>
+    <div class="status-box" id="landedBox">
+      <div class="status-label">You landed on</div>
+      <div class="status-value" id="landedCatText"></div>
     </div>
 
-    <div class="listen-icon" id="listenIcon" style="display:none;">🎧</div>
+    <button class="primary-btn" id="spinBtn" onclick="spinWheel()">🎡 Spin</button>
+    <button class="ghost-btn" id="spinAgainBtn" style="display:none;" onclick="resetWheelScreen()">Spin Again Next Turn</button>
+  </section>
 
-    <button class="primary-btn" id="spinBtn" style="display:none;" onclick="doSpin()">🎡 Spin</button>
-    <button class="primary-btn" id="seeQuestionsBtn" style="display:none;" onclick="showQuestions()">See My Questions →</button>
-
-    <div class="question-list" id="questionList" style="display:none;"></div>
-
-    <div class="custom-box" id="customBox" style="display:none;">
-      <textarea id="customInput" placeholder="Type your own question using 'will'..."></textarea>
-      <button class="primary-btn" style="margin-top:10px;" onclick="submitCustomQuestion()">Ask This Question</button>
-    </div>
-
-    <div class="status-box" id="confirmBox" style="display:none;">
-      <div class="status-label">You asked</div>
-      <div class="confirm-q" id="confirmQText"></div>
-    </div>
-
-    <button class="primary-btn" id="nextTurnBtn" style="display:none;" onclick="nextTurn()">Next Turn →</button>
+  <!-- CATEGORIES SCREEN -->
+  <section id="screen-categories" class="screen">
+    <button class="back-link" onclick="goTo('screen-home')">← Home</button>
+    <div id="categoriesInner"></div>
   </section>
 
 </div>
@@ -207,12 +217,11 @@ const CATEGORIES = [
 ];
 const N = CATEGORIES.length;
 const SLICE = 360 / N;
-const STORAGE_KEY = "futureWheelState_v1";
 
-/* ================= LOCAL (per-device) STATE ================= */
-let myRole = null;          // 'A' or 'B'
-let lastSeenSpinId = -1;    // to avoid re-animating the same spin
-let pollTimer = null;
+/* ================= LOCAL STATE (this device only) ================= */
+let bag = shuffle([...Array(N).keys()]);   // wheel draws without repeats until exhausted
+let totalRotation = 0;
+let usedQuestions = {};                     // { categoryIndex: Set-like array of question indices asked on THIS phone }
 
 function shuffle(arr){
   const a = arr.slice();
@@ -223,81 +232,16 @@ function shuffle(arr){
   return a;
 }
 
-function defaultState(){
-  return {
-    round: 1,
-    spinnerRole: 'A',
-    phase: 'idle',           // idle -> resolved -> asked -> (next turn resets to idle)
-    categoryIndex: null,
-    spinId: 0,
-    totalRotation: 0,
-    bag: shuffle([...Array(N).keys()]),
-    questionText: null,
-    isCustom: false,
-    usedQuestions: {}
-  };
-}
-
-/* ================= STORAGE HELPERS ================= */
-async function getState(){
-  try{
-    const res = await window.storage.get(STORAGE_KEY, true);
-    return res ? JSON.parse(res.value) : null;
-  }catch(e){
-    return null;
-  }
-}
-async function setState(state){
-  try{
-    await window.storage.set(STORAGE_KEY, JSON.stringify(state), true);
-  }catch(e){
-    console.error('storage set failed', e);
-  }
-}
-
-/* ================= JOIN / RESET ================= */
-async function joinAs(role){
-  myRole = role;
-  let state = await getState();
-  if(!state){
-    state = defaultState();
-    await setState(state);
-  }
+/* ================= NAV ================= */
+function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-game').classList.add('active');
-  buildWheel();
-  lastSeenSpinId = state.spinId; // don't re-animate a spin that already happened before we joined
-  animateToRotation(state.totalRotation, true);
-  renderPhase(state);
-  if(pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(pollLoop, 1100);
+  document.getElementById(id).classList.add('active');
 }
 
-async function resetGame(){
-  try{ await window.storage.delete(STORAGE_KEY, true); }catch(e){}
-  location.reload();
-}
-
-/* ================= POLLING ================= */
-async function pollLoop(){
-  const state = await getState();
-  if(!state) return;
-
-  if(state.spinId !== lastSeenSpinId){
-    lastSeenSpinId = state.spinId;
-    animateToRotation(state.totalRotation, false);
-    resetPanels();
-    document.getElementById('turnBadge').textContent = `🎡 ${roleName(state.spinnerRole)}'s Spin`;
-    document.getElementById('headline').textContent = 'Spinning...';
-    setTimeout(() => renderPhase(state), 4100);
-    return;
-  }
-  renderPhase(state);
-}
-
-/* ================= WHEEL BUILD ================= */
+/* ================= WHEEL ================= */
 function buildWheel(){
   const svg = document.getElementById('wheelSvg');
+  if(svg.dataset.built) return;
   const cx = 150, cy = 150, r = 148;
   let html = '';
   CATEGORIES.forEach((cat, i) => {
@@ -322,107 +266,13 @@ function buildWheel(){
       transform="rotate(${midAngle.toFixed(2)}, ${lx.toFixed(2)}, ${ly.toFixed(2)})">${label}</text>`;
   });
   svg.innerHTML = html;
+  svg.dataset.built = "1";
 }
+buildWheel();
 
-function animateToRotation(deg, instant){
-  const svg = document.getElementById('wheelSvg');
-  if(instant){
-    svg.style.transition = 'none';
-    svg.style.transform = `rotate(${deg}deg)`;
-    void svg.offsetWidth; // force reflow
-    svg.style.transition = 'transform 4s cubic-bezier(.17,.67,.21,1)';
-  } else {
-    svg.style.transition = 'transform 4s cubic-bezier(.17,.67,.21,1)';
-    svg.style.transform = `rotate(${deg}deg)`;
-  }
-}
-
-/* ================= RENDER ================= */
-function askerRole(state){ return state.spinnerRole === 'A' ? 'B' : 'A'; }
-function roleName(r){ return r === 'A' ? 'Student A' : 'Student B'; }
-
-function resetPanels(){
-  document.getElementById('subline').style.display = 'none';
-  document.getElementById('statusBox').style.display = 'none';
-  document.getElementById('listenIcon').style.display = 'none';
-  document.getElementById('spinBtn').style.display = 'none';
-  document.getElementById('seeQuestionsBtn').style.display = 'none';
-  document.getElementById('questionList').style.display = 'none';
-  document.getElementById('customBox').style.display = 'none';
-  document.getElementById('confirmBox').style.display = 'none';
-  document.getElementById('nextTurnBtn').style.display = 'none';
-  document.getElementById('wheelWrap').style.display = 'block';
-}
-
-function renderPhase(state){
-  resetPanels();
-  document.getElementById('roundCounter').textContent = `Round ${state.round}`;
-  document.getElementById('youTag').textContent = `You are ${roleName(myRole)}`;
-
-  const iAmSpinner = (myRole === state.spinnerRole);
-  const asker = askerRole(state);
-  const iAmAsker = (myRole === asker);
-
-  document.getElementById('turnBadge').textContent = `🎡 ${roleName(state.spinnerRole)}'s Spin`;
-
-  if(state.phase === 'idle'){
-    document.getElementById('headline').textContent = iAmSpinner ? 'Your Turn to Spin!' : 'Waiting...';
-    if(iAmSpinner){
-      document.getElementById('spinBtn').style.display = 'block';
-    } else {
-      document.getElementById('subline').style.display = 'block';
-      document.getElementById('subline').textContent = `${roleName(state.spinnerRole)} is about to spin the wheel.`;
-    }
-    return;
-  }
-
-  if(state.phase === 'resolved'){
-    const cat = CATEGORIES[state.categoryIndex];
-    document.getElementById('headline').textContent = 'Landed!';
-    document.getElementById('statusBox').style.display = 'block';
-    document.getElementById('statusLabel').textContent = 'Category';
-    document.getElementById('statusValue').textContent = cat.name;
-
-    if(iAmAsker){
-      document.getElementById('statusSub').textContent = `Pick one question to ask ${roleName(state.spinnerRole)}.`;
-      document.getElementById('seeQuestionsBtn').style.display = 'block';
-    } else {
-      document.getElementById('statusSub').textContent = `${roleName(asker)} is choosing a question for you. Get ready to listen!`;
-      document.getElementById('listenIcon').style.display = 'block';
-    }
-    return;
-  }
-
-  if(state.phase === 'asked'){
-    const cat = CATEGORIES[state.categoryIndex];
-    document.getElementById('wheelWrap').style.display = 'none';
-    if(iAmAsker){
-      document.getElementById('headline').textContent = 'Ask This Now';
-      document.getElementById('confirmBox').style.display = 'block';
-      document.getElementById('confirmQText').textContent = `"${state.questionText}"`;
-      document.getElementById('nextTurnBtn').style.display = 'block';
-    } else {
-      document.getElementById('headline').textContent = 'Listen Carefully!';
-      document.getElementById('listenIcon').style.display = 'block';
-      document.getElementById('statusBox').style.display = 'block';
-      document.getElementById('statusLabel').textContent = 'Category';
-      document.getElementById('statusValue').textContent = cat.name;
-      document.getElementById('statusSub').textContent = `${roleName(asker)} is asking you a question. Answer using "will"!`;
-    }
-    return;
-  }
-}
-
-/* ================= SPIN ================= */
-async function doSpin(){
+function spinWheel(){
   document.getElementById('spinBtn').disabled = true;
-  let state = await getState();
-  if(!state || state.phase !== 'idle' || state.spinnerRole !== myRole){
-    document.getElementById('spinBtn').disabled = false;
-    return;
-  }
 
-  let bag = state.bag.slice();
   if(bag.length === 0) bag = shuffle([...Array(N).keys()]);
   const categoryIndex = bag.shift();
 
@@ -430,101 +280,102 @@ async function doSpin(){
   const jitter = (Math.random() - 0.5) * (SLICE * 0.5);
   const targetAngle = (targetCenterAngle + jitter + 360) % 360;
   const rTargetMod = (360 - targetAngle) % 360;
-  const currentMod = ((state.totalRotation % 360) + 360) % 360;
+  const currentMod = ((totalRotation % 360) + 360) % 360;
   const forward = ((rTargetMod - currentMod) + 360) % 360;
-  const newTotalRotation = state.totalRotation + (5 * 360) + forward;
+  totalRotation = totalRotation + (5 * 360) + forward;
 
-  const newState = {
-    ...state,
-    bag,
-    categoryIndex,
-    totalRotation: newTotalRotation,
-    spinId: state.spinId + 1,
-    phase: 'resolved',
-    questionText: null,
-    isCustom: false
-  };
+  const svg = document.getElementById('wheelSvg');
+  svg.style.transform = `rotate(${totalRotation}deg)`;
 
-  lastSeenSpinId = newState.spinId; // mark locally so our own poll doesn't re-trigger
-  animateToRotation(newTotalRotation, false);
-  resetPanels();
-  document.getElementById('headline').textContent = 'Spinning...';
-  document.getElementById('turnBadge').textContent = `🎡 ${roleName(myRole)}'s Spin`;
+  document.getElementById('wheelHeadline').textContent = 'Spinning...';
 
-  await setState(newState);
-
-  setTimeout(() => renderPhase(newState), 4100);
+  setTimeout(() => {
+    document.getElementById('wheelHeadline').textContent = 'Landed!';
+    document.getElementById('landedCatText').textContent = CATEGORIES[categoryIndex].name;
+    document.getElementById('landedBox').classList.add('show');
+    document.getElementById('spinBtn').style.display = 'none';
+    document.getElementById('spinAgainBtn').style.display = 'block';
+  }, 4100);
 }
 
-/* ================= QUESTIONS ================= */
-async function showQuestions(){
-  const state = await getState();
-  if(!state) return;
-  resetPanels();
-  document.getElementById('wheelWrap').style.display = 'none';
-  document.getElementById('headline').textContent = 'Choose ONE Question';
-  document.getElementById('subline').style.display = 'block';
-  document.getElementById('subline').textContent = `Category: ${CATEGORIES[state.categoryIndex].name.toUpperCase()}`;
+function resetWheelScreen(){
+  document.getElementById('wheelHeadline').textContent = 'Spin the Wheel!';
+  document.getElementById('landedBox').classList.remove('show');
+  document.getElementById('spinBtn').style.display = 'block';
+  document.getElementById('spinBtn').disabled = false;
+  document.getElementById('spinAgainBtn').style.display = 'none';
+}
 
-  const used = (state.usedQuestions && state.usedQuestions[state.categoryIndex]) || [];
-  const list = document.getElementById('questionList');
-  list.innerHTML = '';
-  CATEGORIES[state.categoryIndex].questions.forEach((q, qi) => {
-    const btn = document.createElement('button');
-    btn.className = 'question-opt' + (used.includes(qi) ? ' used' : '');
-    btn.textContent = q;
-    btn.onclick = () => chooseQuestion(qi, q, false);
-    list.appendChild(btn);
+/* ================= CATEGORIES ================= */
+function showCategoryGrid(){
+  const inner = document.getElementById('categoriesInner');
+  let html = `
+    <div class="eyebrow">Which Category Did Your Partner Spin?</div>
+    <h1 class="title display">Tap It Below</h1>
+    <p class="subtitle">You'll see 3 questions — plus the option to write your own.</p>
+    <div class="cat-grid">
+  `;
+  CATEGORIES.forEach((cat, i) => {
+    const color = `hsl(${Math.round(i * (360/N))}, 55%, 42%)`;
+    html += `<button class="cat-tile" style="background:${color}" onclick="showQuestionsFor(${i})">${cat.name}</button>`;
   });
-  const customBtn = document.createElement('button');
-  customBtn.className = 'question-opt custom';
-  customBtn.textContent = '+ Make your own question!';
-  customBtn.onclick = () => {
-    list.style.display = 'none';
-    document.getElementById('customBox').style.display = 'block';
-  };
-  list.appendChild(customBtn);
-
-  list.style.display = 'flex';
+  html += `</div>`;
+  inner.innerHTML = html;
 }
 
-async function chooseQuestion(qi, qtext, isCustom){
-  const state = await getState();
-  if(!state) return;
+function showQuestionsFor(catIndex){
+  const cat = CATEGORIES[catIndex];
+  const used = usedQuestions[catIndex] || [];
+  const inner = document.getElementById('categoriesInner');
 
-  const usedQuestions = { ...(state.usedQuestions || {}) };
+  let html = `
+    <div class="eyebrow">${cat.name.toUpperCase()}</div>
+    <h1 class="title display">Choose ONE Question</h1>
+    <div class="question-list">
+  `;
+  cat.questions.forEach((q, qi) => {
+    html += `<button class="question-opt${used.includes(qi) ? ' used' : ''}" onclick="askQuestion(${catIndex}, ${qi}, this.textContent, false)">${q}</button>`;
+  });
+  html += `<button class="question-opt custom" onclick="showCustomInput(${catIndex})">+ Make your own question!</button>`;
+  html += `</div>`;
+  html += `<div id="customArea"></div>`;
+  html += `<div id="askedArea"></div>`;
+  html += `<button class="ghost-btn" onclick="showCategoryGrid()">← Back to Categories</button>`;
+  inner.innerHTML = html;
+}
+
+function showCustomInput(catIndex){
+  const area = document.getElementById('customArea');
+  area.innerHTML = `
+    <div class="custom-box">
+      <textarea id="customText" placeholder="Type your own question using 'will'..."></textarea>
+      <button class="primary-btn" style="margin-top:10px;" onclick="submitCustom(${catIndex})">Ask This Question</button>
+    </div>
+  `;
+}
+
+function submitCustom(catIndex){
+  const text = document.getElementById('customText').value.trim();
+  if(!text) return;
+  askQuestion(catIndex, -1, text, true);
+}
+
+function askQuestion(catIndex, qIndex, qText, isCustom){
   if(!isCustom){
-    const used = usedQuestions[state.categoryIndex] ? usedQuestions[state.categoryIndex].slice() : [];
-    if(!used.includes(qi)) used.push(qi);
-    usedQuestions[state.categoryIndex] = used;
+    if(!usedQuestions[catIndex]) usedQuestions[catIndex] = [];
+    if(!usedQuestions[catIndex].includes(qIndex)) usedQuestions[catIndex].push(qIndex);
   }
-
-  const newState = { ...state, phase: 'asked', questionText: qtext, isCustom, usedQuestions };
-  await setState(newState);
-  renderPhase(newState);
-}
-
-function submitCustomQuestion(){
-  const text = document.getElementById('customInput').value.trim();
-  if(!text){ return; }
-  chooseQuestion(-1, text, true);
-}
-
-/* ================= NEXT TURN ================= */
-async function nextTurn(){
-  const state = await getState();
-  if(!state) return;
-  const newState = {
-    ...state,
-    round: state.round + 1,
-    spinnerRole: state.spinnerRole === 'A' ? 'B' : 'A',
-    phase: 'idle',
-    categoryIndex: null,
-    questionText: null,
-    isCustom: false
-  };
-  await setState(newState);
-  renderPhase(newState);
+  const inner = document.getElementById('categoriesInner');
+  inner.innerHTML = `
+    <div class="eyebrow">${CATEGORIES[catIndex].name.toUpperCase()}</div>
+    <h1 class="title display">Ask This Now</h1>
+    <div class="asked-banner">
+      <div class="q">"${qText}"</div>
+    </div>
+    <p class="subtitle">Say it out loud. Your partner will answer using "will" — no peeking at their screen!</p>
+    <button class="primary-btn" onclick="showCategoryGrid()">Done — Back to Categories</button>
+    <button class="ghost-btn" onclick="goTo('screen-home')">← Home</button>
+  `;
 }
 </script>
 </body>
