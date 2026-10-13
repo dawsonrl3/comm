@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tomorrow, Next Week, and Beyond</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#fbf6ea; --card:#fffdf7; --ink:#1c2733; --muted:#66707c; --line:#e3d8bf;
+    --coral:#e2563b; --coral-d:#b13a24; --teal:#12806f; --teal-l:#d9f0ea;
+    --gold:#ffe3a3; --bad:#c0392b; --bad-l:#fbe4e0; --warn-l:#fff1cf;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:radial-gradient(#e8dec7 1px, transparent 1px);
+    background-size:18px 18px;
+    color:var(--ink);
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    min-height:100vh;
+  }
+  .display{font-family:'Bricolage Grotesque',Inter,system-ui,sans-serif;}
+  #app{max-width:480px;margin:0 auto;padding:0 16px 48px;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ---------- HOME ---------- */
+  #screen-home{padding-top:44px;text-align:center;}
+  .eyebrow{
+    display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+    color:var(--coral-d);background:var(--gold);padding:5px 12px;border-radius:999px;margin-bottom:16px;
+  }
+  h1.title{font-size:clamp(30px,9vw,40px);line-height:1.05;margin:0 0 12px;font-weight:800;letter-spacing:-.01em;}
+  .subtitle{color:var(--muted);font-size:15px;line-height:1.55;margin:0 auto 26px;max-width:340px;}
+  .role-grid{display:flex;flex-direction:column;gap:14px;max-width:340px;margin:0 auto 18px;}
+  .role-card{
+    display:flex;align-items:center;gap:16px;text-align:left;width:100%;
+    background:var(--card);border:2px solid var(--ink);border-radius:16px;padding:16px 18px;cursor:pointer;
+    box-shadow:0 5px 0 var(--ink);color:var(--ink);font:inherit;
+  }
+  .role-card:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink);}
+  .role-letter{
+    flex:0 0 52px;height:52px;border-radius:50%;background:var(--coral);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;
+  }
+  .role-card:nth-child(2) .role-letter{background:var(--teal);}
+  .role-name{font-size:19px;font-weight:800;}
+  .role-desc{font-size:13px;color:var(--muted);margin-top:2px;}
+  .home-note{font-size:13px;color:var(--muted);max-width:320px;margin:0 auto;line-height:1.5;}
+
+  /* ---------- TOP BAR ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0 6px;}
+  .role-pill{
+    background:var(--ink);color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:13px;
+  }
+  .link-btn{background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer;padding:4px;font-family:inherit;}
+  .prog-text{font-size:13px;font-weight:700;color:var(--muted);}
+  .dots{display:flex;gap:6px;padding:4px 0 12px;}
+  .dot{
+    flex:1;height:8px;border-radius:99px;background:#e6dcc4;border:none;padding:0;cursor:default;
+  }
+  .dot.done{background:var(--teal);cursor:pointer;}
+  .dot.current{background:var(--coral);}
+  .dot.open{cursor:pointer;}
+
+  /* ---------- CARDS ---------- */
+  .card{
+    background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px 14px 16px;margin-bottom:14px;
+  }
+  .card h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--coral-d);margin:0 0 10px;}
+
+  details.model summary{
+    list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+    font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--coral-d);
+  }
+  details.model summary::-webkit-details-marker{display:none;}
+  details.model summary::after{content:"hide";font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--muted);font-weight:600;text-decoration:underline;}
+  details.model:not([open]) summary::after{content:"show";}
+  table.model{width:100%;border-collapse:collapse;margin-top:8px;}
+  table.model td{padding:9px 4px;border-top:1px dashed var(--line);vertical-align:top;font-size:14.5px;line-height:1.5;}
+  table.model tr:first-child td{border-top:none;}
+  td.who{width:84px;padding-right:8px;}
+  .who-step{display:flex;align-items:center;gap:6px;font-weight:800;font-size:13px;}
+  .who-badge{
+    display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;
+    color:#fff;font-size:12px;font-weight:800;
+  }
+  .who-badge.a{background:var(--coral);}
+  .who-badge.b{background:var(--teal);}
+  .who-label{font-size:11px;color:var(--muted);line-height:1.3;margin-top:3px;font-weight:500;}
+  strong.fw{font-weight:800;color:var(--coral-d);background:linear-gradient(transparent 58%, var(--gold) 58%);padding:0 1px;}
+
+  /* ---------- STEP 1 ---------- */
+  .q-sentence{font-size:19px;line-height:2.5;font-weight:500;margin:0 0 4px;}
+  select.pick{
+    font:600 17px Inter,system-ui,sans-serif;color:var(--ink);
+    padding:6px 30px 6px 10px;border:2px solid var(--ink);border-radius:10px;margin:0 2px;max-width:100%;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%231c2733' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center;
+    -webkit-appearance:none;appearance:none;
+  }
+  select.pick.empty{border-style:dashed;color:var(--muted);}
+  select.pick.ok{border-color:var(--teal);background-color:var(--teal-l);}
+  select.pick.bad{border-color:var(--bad);background-color:var(--bad-l);}
+  select.pick:disabled{opacity:1;color:var(--ink);}
+  .fb{margin-top:10px;padding:11px 13px;border-radius:12px;font-size:14.5px;line-height:1.5;font-weight:600;}
+  .fb.good{background:var(--teal-l);color:#0b5a4d;}
+  .fb.warn{background:var(--warn-l);color:#6b4a00;}
+  .fb.bad{background:var(--bad-l);color:#8a2315;}
+  .fb:empty{display:none;}
+  .hint-line{font-size:13px;color:var(--muted);margin:8px 0 0;}
+
+  /* ---------- STEP 2 ---------- */
+  .ask-q{
+    font-size:21px;line-height:1.45;font-weight:600;background:var(--paper);border:2px solid var(--ink);border-radius:14px;
+    padding:14px 14px;margin:0 0 14px;
+  }
+  ol.routine{margin:0 0 12px;padding-left:20px;font-size:14.5px;line-height:1.6;}
+  .partner-line{font-size:14.5px;font-weight:700;margin:0 0 12px;}
+  .chips-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--muted);margin:10px 0 6px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:600;}
+
+  /* ---------- BUTTONS ---------- */
+  .btn{
+    border:2px solid var(--ink);border-radius:12px;padding:13px 16px;font:700 15px Inter,system-ui,sans-serif;cursor:pointer;
+    background:var(--coral);color:#fff;box-shadow:0 4px 0 var(--ink);
+  }
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink);}
+  .btn.ghost{background:var(--card);color:var(--ink);}
+  .btn:disabled{opacity:.35;box-shadow:none;cursor:default;transform:none;}
+  .nav-row{display:flex;gap:12px;margin-top:6px;}
+  .nav-row .btn{flex:1;}
+
+  /* ---------- FINISH ---------- */
+  #screen-finish{padding-top:40px;text-align:center;}
+  .finish-card{text-align:left;}
+  .example{font-size:17px;line-height:1.5;font-style:italic;background:var(--paper);border-radius:12px;padding:12px 14px;margin:8px 0 0;}
+  .finish-actions{display:flex;flex-direction:column;gap:12px;margin-top:16px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <section id="screen-home" class="screen active">
+    <div class="eyebrow">Future · will &amp; going to</div>
+    <h1 class="title display">Tomorrow, Next Week, and Beyond</h1>
+    <p class="subtitle">Choose the correct future form, then ask your partner. Your partner has different questions, so don't look at their phone.</p>
+    <div class="role-grid">
+      <button class="role-card" id="pickA" type="button">
+        <div class="role-letter display">A</div>
+        <div><div class="role-name display">Student A</div><div class="role-desc">10 questions to ask your partner</div></div>
+      </button>
+      <button class="role-card" id="pickB" type="button">
+        <div class="role-letter display">B</div>
+        <div><div class="role-name display">Student B</div><div class="role-desc">10 questions to ask your partner</div></div>
+      </button>
+    </div>
+    <p class="home-note">One of you picks A and the other picks B. You work through the questions at the same time.</p>
+  </section>
+
+  <!-- GAME -->
+  <section id="screen-game" class="screen">
+    <div class="topbar">
+      <span class="role-pill" id="roleTag"></span>
+      <span class="prog-text" id="progText"></span>
+      <button class="link-btn" id="switchBtn" type="button">switch</button>
+    </div>
+    <div class="dots" id="dots"></div>
+
+    <details class="card model" id="modelCard" open>
+      <summary>Model conversation</summary>
+      <table class="model"><tbody id="modelBody"></tbody></table>
+    </details>
+
+    <div class="card" id="step1">
+      <h2>Step 1 · Choose the future form</h2>
+      <p class="q-sentence" id="qSentence"></p>
+      <div class="fb" id="fb" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="card" id="step2" style="display:none;">
+      <h2>Step 2 · Ask your partner</h2>
+      <p class="ask-q" id="askQ"></p>
+      <ol class="routine">
+        <li>Ask your question out loud.</li>
+        <li>Listen to the answer and the extra detail.</li>
+        <li>Ask a follow-up question.</li>
+        <li>Listen to the second answer and extra detail.</li>
+      </ol>
+      <p class="partner-line" id="partnerLine"></p>
+      <div class="chips-title">Extra detail</div>
+      <div class="chips"><span class="chip">I'll probably...</span><span class="chip">I think I'll...</span><span class="chip">Maybe I'll...</span></div>
+      <div class="chips-title">Follow-up question</div>
+      <div class="chips"><span class="chip">Who...?</span><span class="chip">Where...?</span><span class="chip">When...?</span><span class="chip">What...?</span><span class="chip">How...?</span><span class="chip">Are you going to...?</span><span class="chip">Will you...?</span></div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn ghost" id="backBtn" type="button">← Back</button>
+      <button class="btn" id="nextBtn" type="button">Next →</button>
+    </div>
+  </section>
+
+  <!-- FINISH -->
+  <section id="screen-finish" class="screen">
+    <div class="eyebrow">All questions done</div>
+    <h1 class="title display">Great work!</h1>
+    <div class="card finish-card">
+      <h2>Tell the class</h2>
+      <div>Tell the class one thing you learned about your partner. Use <strong class="fw">going to</strong> for a plan and <strong class="fw">I'll probably</strong> for an extra detail.</div>
+      <div class="example">"Yuki <strong class="fw">is going to</strong> visit her grandmother. She<strong class="fw">'ll</strong> probably take the train."</div>
+    </div>
+    <div class="finish-actions">
+      <button class="btn ghost" id="reviewBtn" type="button">← Back to my questions</button>
+      <button class="btn ghost" id="restartBtn" type="button">Start over</button>
+      <button class="btn ghost" id="switchBtn2" type="button">Switch role</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ================= DATA ================= */
+/* pref: which form sounds most natural ('be' = be going to, 'will' = will)
+   why: short reason shown in the feedback                                  */
+function mk(pre, be, will, mid, verb, post, pref, why){
+  return { pre, be, will, mid, verb, post, pref, why,
+           auxFirst: Math.random() < 0.5, mainFirst: Math.random() < 0.5 };
+}
+const PLAN = "It's a plan.";
+const FAR  = "10 years is far in the future.";
+const PRED = "It's a prediction.";
+
+const DATA = {
+  A: [
+    mk("",        "Are", "Will", " you ", "attend", " any events or concerts next month?", "be",   PLAN),
+    mk("What ",   "are", "will", " you ", "do",     " after this class?",                  "be",   PLAN),
+    mk("",        "Are", "Will", " you ", "meet",   " anyone later today?",                "be",   PLAN),
+    mk("",        "Are", "Will", " you ", "buy",    " anything online this month?",        "be",   PLAN),
+    mk("Who ",    "are", "will", " you ", "talk",   " to first tomorrow?",                 "be",   PLAN),
+    mk("",        "Are", "Will", " you ", "take",   " a holiday soon?",                    "be",   PLAN),
+    mk("What ",   "are", "will", " you ", "have",   " for dinner tonight?",                "be",   PLAN),
+    mk("",        "Are", "Will", " you ", "work",   " for a big company in 10 years?",     "will", FAR),
+    mk("Do you think the weather ", "is", "will", " ", "be", " good tomorrow?",            "will", PRED),
+    mk("",        "Are", "Will", " you ", "use",    " English every day in your future job?", "will", "It's about your future in general.")
+  ],
+  B: [
+    mk("",        "Are", "Will", " you ", "travel", " anywhere this weekend?",             "be",   PLAN),
+    mk("Do you think you ", "are", "will", " ", "live", " where you do now in 10 years?",  "will", FAR),
+    mk("What ",   "are", "will", " you ", "wear",   " to class tomorrow?",                 "be",   PLAN),
+    mk("",        "Are", "Will", " you ", "join",   " any clubs or groups soon?",          "be",   PLAN),
+    mk("",        "Are", "Will", " you ", "study",  " another language in the future?",    "will", "'In the future' is far away."),
+    mk("",        "Are", "Will", " you ", "watch",  " anything interesting on TV this week?", "be", PLAN),
+    mk("What do you think ", "is", "will", " ", "happen", " in the next class?",           "will", PRED),
+    mk("",        "Are", "Will", " you ", "invite", " anyone over for dinner next week?",  "be",   PLAN),
+    mk("",        "Are", "Will", " you ", "visit",  " your friends this weekend?",         "be",   PLAN),
+    mk("What ",   "are", "will", " you ", "focus",  " on in your studies or work this year?", "be", PLAN)
+  ]
+};
+
+const MODEL = [
+  { n:1, who:"A", label:"Question",
+    html:'<strong class="fw">Are</strong> you <strong class="fw">going to</strong> attend any events or concerts next month?' },
+  { n:2, who:"B", label:"Answer + extra detail",
+    html:'Yeah, <strong class="fw">I\'m going to</strong> attend a Thanksgiving party at my friend\'s house. <strong class="fw">I\'ll</strong> probably bake an apple pie.' },
+  { n:3, who:"A", label:"Follow-up question",
+    html:'<strong class="fw">Are</strong> you <strong class="fw">going to</strong> stay the night at your friend\'s house?' },
+  { n:4, who:"B", label:"Answer + extra detail",
+    html:'No, <strong class="fw">I\'m</strong> not. <strong class="fw">I\'ll</strong> probably take the last train home.' }
+];
+
+/* ================= STATE (this phone only) ================= */
+let role = null;
+let idx = 0;
+let prog = [];
+
+const $ = id => document.getElementById(id);
+
+function freshProgress(){
+  return DATA[role].map(() => ({ aux:"", main:"", done:false, wrong:0, msg:"", msgType:"", chosenAux:"", chosenMain:"" }));
+}
+
+/* ================= NAV ================= */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function start(r){
+  role = r;
+  idx = 0;
+  prog = freshProgress();
+  show('screen-game');
+  renderGame();
+}
+
+function goHome(){
+  role = null;
+  show('screen-home');
+}
+
+/* ================= MODEL TABLE (same on every page) ================= */
+function buildModel(){
+  $('modelBody').innerHTML = MODEL.map(r => `
+    <tr>
+      <td class="who">
+        <div class="who-step"><span>${r.n}</span><span class="who-badge ${r.who.toLowerCase()}">${r.who}</span></div>
+        <div class="who-label">${r.label}</div>
+      </td>
+      <td>${r.html}</td>
+    </tr>`).join('');
+}
+
+/* ================= HELPERS ================= */
+function mainText(q, v){ return v === 'gt' ? 'going to ' + q.verb : q.verb; }
+function auxText(q, v){ return v === 'will' ? q.will : q.be; }
+
+function builtQuestionHtml(q, auxV, mainV){
+  const aux = '<strong class="fw">' + auxText(q, auxV) + '</strong>';
+  const main = mainV === 'gt'
+    ? '<strong class="fw">going to</strong> ' + q.verb
+    : q.verb;
+  return q.pre + aux + q.mid + main + q.post;
+}
+
+function optionsHtml(items, first, selected){
+  // items: [{v, t}, {v, t}] ; first: boolean -> which one goes first
+  const ordered = first ? items : items.slice().reverse();
+  let html = '<option value="">choose</option>';
+  ordered.forEach(o => {
+    html += `<option value="${o.v}"${selected === o.v ? ' selected' : ''}>${o.t}</option>`;
+  });
+  return html;
+}
+
+/* ================= RENDER GAME ================= */
+function renderGame(){
+  const qs = DATA[role];
+  const q = qs[idx];
+  const st = prog[idx];
+
+  $('roleTag').textContent = 'Student ' + role;
+  $('progText').textContent = 'Question ' + (idx + 1) + ' of ' + qs.length;
+
+  // progress dots
+  let firstOpen = prog.findIndex(p => !p.done);
+  if (firstOpen === -1) firstOpen = prog.length;
+  $('dots').innerHTML = '';
+  prog.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'dot' + (p.done ? ' done' : '') + (i === idx ? ' current' : '');
+    b.setAttribute('aria-label', 'Question ' + (i + 1));
+    if (i <= firstOpen) {
+      b.classList.add('open');
+      b.addEventListener('click', () => { idx = i; renderGame(); });
+    }
+    $('dots').appendChild(b);
+  });
+
+  // step 1 sentence
+  const auxItems  = [{ v:'be', t:q.be }, { v:'will', t:q.will }];
+  const mainItems = [{ v:'gt', t:'going to ' + q.verb }, { v:'base', t:q.verb }];
+  $('qSentence').innerHTML =
+    q.pre +
+    `<select class="pick" id="selAux" aria-label="Choose the first word">${optionsHtml(auxItems, q.auxFirst, st.aux)}</select>` +
+    q.mid +
+    `<select class="pick" id="selMain" aria-label="Choose the verb form">${optionsHtml(mainItems, q.mainFirst, st.main)}</select>` +
+    q.post;
+
+  const selAux = $('selAux'), selMain = $('selMain');
+  selAux.addEventListener('change', () => { st.aux = selAux.value; evaluate(); });
+  selMain.addEventListener('change', () => { st.main = selMain.value; evaluate(); });
+  styleSelects();
+
+  // feedback
+  const fb = $('fb');
+  fb.textContent = st.msg || '';
+  fb.className = 'fb' + (st.msgType ? ' ' + st.msgType : '');
+
+  // step 2
+  if (st.done) {
+    selAux.disabled = true; selMain.disabled = true;
+    $('step2').style.display = 'block';
+    $('askQ').innerHTML = builtQuestionHtml(q, st.chosenAux, st.chosenMain);
+    $('partnerLine').textContent = 'Then your partner asks you their Question ' + (idx + 1) + '. Listen and answer.';
+  } else {
+    $('step2').style.display = 'none';
+  }
+
+  // nav
+  $('backBtn').disabled = idx === 0;
+  $('nextBtn').disabled = !st.done;
+  $('nextBtn').textContent = idx === qs.length - 1 ? 'Finish →' : 'Next →';
+}
+
+function styleSelects(){
+  const q = DATA[role][idx];
+  const st = prog[idx];
+  const selAux = $('selAux'), selMain = $('selMain');
+  [selAux, selMain].forEach(s => {
+    s.classList.remove('empty', 'ok', 'bad');
+    if (!s.value) s.classList.add('empty');
+  });
+  if (st.done) {
+    selAux.classList.add('ok'); selMain.classList.add('ok');
+  } else if (st.msgType === 'bad') {
+    selAux.classList.add('bad'); selMain.classList.add('bad');
+  }
+}
+
+/* ================= CHECK ================= */
+function evaluate(){
+  const q = DATA[role][idx];
+  const st = prog[idx];
+  styleSelects();
+  if (!st.aux || !st.main) {
+    st.msg = ''; st.msgType = '';
+    $('fb').textContent = ''; $('fb').className = 'fb';
+    return;
+  }
+
+  const auxIsWill = st.aux === 'will';
+  const gt = st.main === 'gt';
+  const valid = (auxIsWill && !gt) || (!auxIsWill && gt);
+
+  if (!valid) {
+    st.wrong++;
+    st.msgType = 'bad';
+    st.msg = auxIsWill
+      ? 'Not quite. After "' + auxText(q, 'will') + '", use only the verb. Do not add "going to".'
+      : 'Not quite. After "' + auxText(q, 'be') + '", you need "going to" + the verb.';
+    renderGame();
+    return;
+  }
+
+  const preferredWill = q.pref === 'will';
+  const isPreferred = preferredWill === auxIsWill;
+  const natural = preferredWill ? 'will' : 'going to';
+  st.chosenAux = st.aux;
+  st.chosenMain = st.main;
+  st.done = true;
+  if (isPreferred) {
+    st.msgType = 'good';
+    st.msg = '✔ Correct! ' + q.why + ' → ' + natural;
+  } else {
+    st.msgType = 'warn';
+    st.msg = '✔ Also possible! But "' + natural + '" sounds more natural here. ' + q.why;
+  }
+  renderGame();
+}
+
+/* ================= EVENTS ================= */
+$('pickA').addEventListener('click', () => start('A'));
+$('pickB').addEventListener('click', () => start('B'));
+$('switchBtn').addEventListener('click', goHome);
+$('switchBtn2').addEventListener('click', goHome);
+
+$('backBtn').addEventListener('click', () => {
+  if (idx > 0) { idx--; renderGame(); window.scrollTo(0, 0); }
+});
+$('nextBtn').addEventListener('click', () => {
+  if (!prog[idx].done) return;
+  if (idx < DATA[role].length - 1) { idx++; renderGame(); window.scrollTo(0, 0); }
+  else { show('screen-finish'); }
+});
+$('reviewBtn').addEventListener('click', () => { idx = DATA[role].length - 1; show('screen-game'); renderGame(); });
+$('restartBtn').addEventListener('click', () => start(role));
+
+buildModel();
+</script>
+</body>
+</html>
