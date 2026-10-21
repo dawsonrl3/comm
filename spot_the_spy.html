@@ -181,6 +181,16 @@
   .guessbtn{display:block;width:100%;margin-top:18px;border:2px dashed var(--pink);background:rgba(255,61,139,.08);color:#ffc2da;border-radius:14px;padding:13px;font:800 15px Nunito;cursor:pointer;}
   .ov{position:fixed;inset:0;z-index:30;background:rgba(5,7,16,.94);overflow-y:auto;padding:18px 14px 30px;}
   .ovi{max-width:480px;margin:0 auto;}
+  .ref{background:var(--panel);border:2px solid var(--pink);border-radius:16px;padding:10px 10px 8px;margin:10px 0;}
+  .ref h3{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ffc2da;}
+  .rg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+  .rc{background:var(--paper);border:0;border-radius:8px;padding:3px 3px 4px;color:var(--paperink);cursor:pointer;font:inherit;position:relative;}
+  .rc .scn{display:block;aspect-ratio:360/220;border-radius:5px;overflow:hidden;} .rc .scn svg{display:block;width:100%;height:100%;}
+  .rc span{display:block;font:800 10px/1.15 Nunito;margin-top:3px;text-align:center;}
+  .rc.x{opacity:.3;filter:grayscale(1);} .rc.x span{text-decoration:line-through;}
+  .refbar{display:flex;align-items:center;gap:12px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:8px 12px 8px 8px;margin:6px 0 10px;}
+  .refbar .scn{flex:0 0 92px;aspect-ratio:360/220;border-radius:6px;overflow:hidden;} .refbar .scn svg{display:block;width:100%;height:100%;}
+  .refbar small{display:block;font:800 10px Nunito;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);} .refbar b{font:400 18px Bungee;color:var(--amber);}
   .steam{animation:stm 3.2s ease-in-out infinite;} @keyframes stm{0%,100%{opacity:.15;transform:translateY(3px)}50%{opacity:.6;transform:translateY(-4px)}}
   .flick{animation:fk 2.6s ease-in-out infinite;} @keyframes fk{0%,100%{opacity:.95}45%{opacity:.7}60%{opacity:1}}
   @media (prefers-reduced-motion: reduce){*{animation:none !important;}}
@@ -220,10 +230,6 @@
       <div class="codebig" id="waitCode"></div>
       <p class="lead">Your group (3 to 6 players): open this page, tap “Join a room”, and type this code.</p>
       <div class="plist" id="waitList"></div>
-      <div id="roundsBox" style="margin-top:18px">
-        <div class="fl" style="text-align:center">Number of rounds</div>
-        <div class="seg" id="roundSeg"></div>
-      </div>
       <div class="err" id="waitErr"></div>
       <button class="btn" id="startBtn" type="button">Start the game</button>
       <div class="wt" id="waitMsg"></div>
@@ -322,7 +328,7 @@ const PLACES=[
 ];
 const PL=Object.fromEntries(PLACES.map(p=>[p.id,p]));
 const AVATARS=['🕵️','🦊','🐱','🐼','🐸','🦉','🐙','🐵','🦄','🐻'];
-const MIN_P=3, MAX_P=6;
+const MIN_P=3, MAX_P=6, ROUNDS=4;
 
 /* =====================================================================
    ILLUSTRATED SCENES (inline SVG, 360 x 220)
@@ -499,38 +505,31 @@ function advanceTurn(nx){
   return nx;
 }
 function finish(nx,how){
-  const ps=nx.order.map(id=>(nx.players||{})[id]?id:null).filter(Boolean);
-  const d={}; ps.forEach(id=>d[id]=0);
-  const others=ps.filter(id=>id!==nx.spy);
-  if(how==='early-right') d[nx.spy]=3;
-  else if(how==='caught-right') d[nx.spy]=2;
-  else if(how==='uncaught') d[nx.spy]=3;
-  else if(how==='early-wrong'||how==='caught-wrong') others.forEach(id=>d[id]=2);
-  if(how!=='early-right'&&how!=='early-wrong'){ others.forEach(id=>{ if((nx.players[id]||{}).vote===nx.spy) d[id]+=1; }); }
-  ps.forEach(id=>{ const p=nx.players[id]; p.delta=d[id]; p.score=(p.score||0)+d[id]; });
-  nx.result={how, spyWin: how==='early-right'||how==='caught-right'||how==='uncaught'};
+  const ids=nx.order.filter(id=>(nx.players||{})[id]);
+  const spy=nx.spy, others=ids.filter(id=>id!==spy), d={};
+  ids.forEach(id=>{ d[id]=0; });
+  if(how==='caught') others.forEach(id=>{ d[id]=2; });
+  else{ d[spy]=3; others.forEach(id=>{ if(nx.players[id].vote===spy) d[id]+=1; }); }
+  ids.forEach(id=>{ const p=nx.players[id]; p.delta=d[id]; p.score=(p.score||0)+d[id]; });
+  nx.result={how, spyWin:how!=='caught'};
   nx.phase='reveal'; strip(nx,'ready');
   return nx;
 }
+/* only the agents (everyone except the spy) vote */
+const votersOf=s=>onlineOf(s).filter(p=>p.id!==s.spy&&(s.order||[]).includes(p.id));
 function resolveVote(nx){
-  const tally={};
-  nx.order.forEach(id=>{ const v=(nx.players[id]||{}).vote; if(v) tally[v]=(tally[v]||0)+1; });
-  const max=Math.max(0,...Object.values(tally));
-  const tops=Object.keys(tally).filter(k=>tally[k]===max);
-  const caught=tops.length===1&&tops[0]===nx.spy;
-  nx.tally=tally;
-  if(caught){ nx.phase='catch'; return nx; }
-  return finish(nx,'uncaught');
+  const v=votersOf(nx);
+  const unanimous=v.length>0&&v.every(p=>p.vote===nx.spy);
+  return finish(nx,unanimous?'caught':'uncaught');
 }
 function reduce(cur,a){
   if(!cur) return null;
   const nx=clone(cur);
   switch(a.t){
-    case 'rounds': if(cur.phase!=='lobby'||cur.host!==a.by) return null; nx.rounds=a.n; return nx;
     case 'start': {
       if(cur.phase!=='lobby'&&cur.phase!=='final') return null;
       const n=onlineOf(cur).length; if(n<MIN_P||n>MAX_P) return null;
-      nx.round=0; nx.usedPlaces={}; nx.tally=null; nx.rounds=cur.rounds||5;
+      nx.round=0; nx.usedPlaces={};
       Object.keys(nx.players).forEach(id=>{ nx.players[id].score=0; });
       return newRound(nx);
     }
@@ -545,22 +544,9 @@ function reduce(cur,a){
       nx.sub='answer'; return nx;
     }
     case 'done': {
-      if(cur.phase!=='turns'||cur.sub!=='answer') return null;
-      if(a.by!==cur.q.to) return null;
-      const nm=id=>((cur.players||{})[id]||{}).name||'?';
-      nx.log=(cur.log||[]).concat([nm(cur.q.by)+' ➜ '+nm(cur.q.to)+': '+cur.q.text]);
+      if(cur.phase!=='turns'||cur.sub!=='answer'||a.by!==cur.q.to) return null;
       return advanceTurn(nx);
     }
-    case 'guess': {            /* spy guesses early (during questions or voting) */
-      if(cur.phase!=='turns'&&cur.phase!=='vote') return null;
-      if(a.by!==cur.spy) return null;
-      return finish(nx,a.place===cur.place?'early-right':'early-wrong');
-    }
-    case 'cguess': {           /* spy was caught and gets one last guess */
-      if(cur.phase!=='catch'||a.by!==cur.spy) return null;
-      return finish(nx,a.place===cur.place?'caught-right':'caught-wrong');
-    }
-    case 'start-again': return reduce(cur,{t:'start'});
   }
   return null;
 }
@@ -576,11 +562,11 @@ function auto(cur){
     if(cur.sub==='answer'&&!on(to)) return advanceTurn(nx);
     return null;
   }
-  if(cur.phase==='vote'){ if(!ps.every(p=>p.vote)) return null; return resolveVote(nx); }
+  if(cur.phase==='vote'){ const v=votersOf(cur); if(!v.length||!v.every(p=>p.vote)) return null; return resolveVote(nx); }
   if(cur.phase==='reveal'){
     if(!ps.every(p=>p.ready)) return null;
     strip(nx,'ready');
-    if(cur.round>=(cur.rounds||5)){ nx.phase='final'; return nx; }
+    if(cur.round>=ROUNDS){ nx.phase='final'; return nx; }
     return newRound(nx);
   }
   return null;
@@ -596,7 +582,7 @@ const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
 const qp=new URLSearchParams(location.search);
 const L={pid:qp.get('pid')||lsGet('spy_pid')||Math.random().toString(36).slice(2,8),ref:null,cb:null,tab:'create',avatar:AVATARS[0],
-  topic:null,form:null,tkey:'',guessOpen:false,guessPick:null,votePick:null,rkey:'',fxKey:''};
+  topic:null,form:null,tkey:'',votePick:null,cross:{},crossRound:0,rkey:'',fxKey:''};
 if(!qp.get('pid')) lsSet('spy_pid',L.pid);
 const SESSION_KEY='spy_room_'+L.pid;
 let S=null;
@@ -623,7 +609,7 @@ async function go(){
   try{
     if(L.tab==='create'){
       let code,t=0; do{ code=genCode(); const sn=await db.ref(ROOT+'/'+code).once('value'); if(!sn.exists()) break; t++; }while(t<8);
-      await db.ref(ROOT+'/'+code).set({code,phase:'lobby',host:L.pid,rounds:5,round:0,createdAt:TS()});
+      await db.ref(ROOT+'/'+code).set({code,phase:'lobby',host:L.pid,round:0,createdAt:TS()});
       await addMe(code,name); enterRoom(code);
     }else{
       const code=$('inCode').value.trim().toUpperCase();
@@ -655,7 +641,7 @@ function enterRoom(code){
   });
 }
 function leaveSub(){ if(L.ref&&L.cb){ try{L.ref.off('value',L.cb);}catch(e){} } L.ref=null; L.cb=null; }
-function goHome(msg){ leaveSub(); lsDel(SESSION_KEY); L.code=null; S=null; L.guessOpen=false; $('ovWrap').innerHTML=''; show('s-home'); homeErr(msg||''); $('goBtn').disabled=false; }
+function goHome(msg){ leaveSub(); lsDel(SESSION_KEY); L.code=null; S=null; show('s-home'); homeErr(msg||''); $('goBtn').disabled=false; }
 async function leaveRoom(){ if(L.ref){ try{await L.ref.child('players/'+L.pid).remove();}catch(e){} } goHome(''); }
 $('leaveWait').addEventListener('click',leaveRoom);
 $('leaveGame').addEventListener('click',()=>{ if(confirm('Leave this room?')) leaveRoom(); });
@@ -687,38 +673,34 @@ const isSpy=()=>S&&S.spy===L.pid;
 function render(){
   if(!S) return;
   if(S.phase==='lobby'){ renderWait(); show('s-wait'); return; }
-  show('s-game'); renderHud(); renderRoster(); renderStage(); renderOverlay(); renderFx();
+  show('s-game'); renderHud(); renderRoster(); renderStage(); renderFx();
 }
 function renderWait(){
   $('waitCode').textContent=S.code;
   const ps=players();
   $('waitList').innerHTML=ps.map(p=>`<div class="prow ${p.online===false?'off':''}"><span class="e">${esc(p.avatar)}</span><span>${esc(p.name)}</span>${p.id===S.host?'<small>host</small>':''}</div>`).join('');
   const host=S.host===L.pid, n=onlineOf(S).length;
-  $('roundSeg').innerHTML=[4,5,6].map(r=>`<button type="button" data-r="${r}" class="${(S.rounds||5)===r?'on':''}" ${host?'':'disabled'}>${r}</button>`).join('');
   $('startBtn').style.display=host?'block':'none';
   $('startBtn').disabled=n<MIN_P;
   $('waitMsg').textContent=host?(n<MIN_P?`Waiting for more players (${n}/${MIN_P} minimum)…`:'Everyone here? Press start.'):'Waiting for the host to start…';
 }
-$('roundSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b&&!b.disabled) act({t:'rounds',n:+b.dataset.r}); });
 $('startBtn').addEventListener('click',()=>{ $('waitErr').textContent=''; act({t:'start'}); });
 
 function renderHud(){
-  const names={role:'Secret briefing',turns:'Questions',vote:'Vote!',catch:'Last chance',reveal:'Result',final:'Final scores'};
-  $('hudRd').innerHTML=`Round ${Math.min(S.round||1,S.rounds||5)} / ${S.rounds||5}<small>${names[S.phase]||''}</small>`;
+  const names={role:'Secret briefing',turns:'Questions',vote:'Vote!',reveal:'Result',final:'Final scores'};
+  $('hudRd').innerHTML=`Round ${Math.min(S.round||1,ROUNDS)} / ${ROUNDS}<small>${names[S.phase]||''}</small>`;
   if(S.phase==='final'||!S.place) $('hudMe').innerHTML='';
   else $('hudMe').innerHTML=isSpy()?`<span class="chipme spy">🕵️ You are the SPY</span>`:`<span class="chipme">📍 ${esc(PL[S.place].name)}</span>`;
 }
 function renderRoster(){
   $('roster').innerHTML=players().map(p=>{
-    let st=''; if((S.phase==='role'||S.phase==='reveal')&&p.ready) st=' ✔'; if(S.phase==='vote'&&p.vote) st=' ✔';
+    let st=''; if((S.phase==='role'||S.phase==='reveal')&&p.ready) st=' ✔'; 
     return `<div class="rp ${p.id===L.pid?'me':''} ${p.online===false?'off':''}"><span class="e">${esc(p.avatar)}</span>${esc(p.name)}${st}<b>${p.score||0}</b></div>`;
   }).join('');
 }
 const polaroid=(pid,tag)=>`<div class="pol"><div class="scn">${sceneSvg(pid)}</div><div class="cap">${esc(PL[pid].name)}<small>${esc(tag||CLUSTERS[PL[pid].c])}</small></div></div>`;
-function cardsHtml(ids,sel,live){
-  return `<div class="cards">`+ids.map(id=>live
-    ?`<button type="button" class="pc ${sel===id?'sel':''}" data-a="gpick" data-v="${id}"><div class="scn">${sceneSvg(id)}</div><span>${esc(PL[id].name)}</span></button>`
-    :`<div class="pc"><div class="scn">${sceneSvg(id)}</div><span>${esc(PL[id].name)}</span></div>`).join('')+`</div>`;
+function cardsHtml(ids){
+  return `<div class="cards">`+ids.map(id=>`<div class="pc"><div class="scn">${sceneSvg(id)}</div><span>${esc(PL[id].name)}</span></div>`).join('')+`</div>`;
 }
 const stemsHtml=(arr,cls='')=>`<div class="stems">`+arr.map(s=>`<div class="stem ${cls}">${esc(s)}</div>`).join('')+`</div>`;
 const minis=arr=>`<div class="minis">`+arr.map(s=>`<span class="mini">${esc(s)}</span>`).join('')+`</div>`;
@@ -736,19 +718,29 @@ function ringHtml(){
     return `<div class="rn ${role}" style="left:${p.x/W*100}%;top:${p.y/H*100}%"><div class="face">${esc(avOf(p.id))}</div><div class="nm">${esc(nameOf(p.id))}</div><div class="rl">${role==='ask'?'ASKS':role==='ans'?'ANSWERS':'&nbsp;'}</div></div>`; }).join('')+`</div>`;
 }
 const dotsHtml=()=>`<div class="dots">`+range(S.total).map(i=>`<i class="${i<S.turn?'d':i===S.turn?'n':''}"></i>`).join('')+`</div>`;
-const spyBtn=()=>isSpy()?`<button class="guessbtn" type="button" data-a="gopen">🕵️ I know the place! (risky!)</button>`:'';
+function voteCount(){ const v=votersOf(S); return `<div class="wt">${v.filter(p=>p.vote).length} of ${v.length} agents have voted</div>`; }
+const ANS_YN=['Yes, you have to ___ .',"No, you don't have to ___ , but you can ___ .",'Yes, you can ___ .',"No, you can't ___ because ___ ."];
+const ANS_WH=['You have to ___ .',"You can ___ , but you can't ___ .","You don't have to ___ because ___ ."];
+function refHtml(){
+  if(isSpy()){
+    const cr=L.cross||{};
+    return `<div class="ref"><h3>Possible places · tap to cross one out</h3><div class="rg">`+S.cand.map(id=>`<button type="button" class="rc ${cr[id]?'x':''}" data-a="cross" data-v="${id}"><div class="scn">${sceneSvg(id)}</div><span>${esc(PL[id].name)}</span></button>`).join('')+`</div></div>`;
+  }
+  return `<div class="refbar"><div class="scn">${sceneSvg(S.place)}</div><div><small>Secret place</small><b>${esc(PL[S.place].name)}</b></div></div>`;
+}
 
 function renderStage(){
   const P=$('stage'), m=me(); let h='';
-  const sk=S.phase+':'+S.round+':'+(S.turn||0)+':'+(S.sub||''); if(sk!==L.skey){ L.skey=sk; window.scrollTo(0,0); }
   const ph=S.phase;
+  const sk=ph+':'+S.round+':'+(S.turn||0)+':'+(S.sub||''); if(sk!==L.skey){ L.skey=sk; window.scrollTo(0,0); }
+  if(L.crossRound!==S.round){ L.crossRound=S.round; L.cross={}; }
 
   if(ph==='role'){
     if(isSpy()){
       h+=`<div class="step">Secret briefing</div>
         <div class="spycard"><div class="big">🕵️</div><div class="t">YOU ARE THE SPY</div><p>You don’t know the place. Listen carefully to the questions and answers, and pretend you know!</p></div>
         <div class="box"><h3>The place is one of these 8</h3>${cardsHtml(S.cand,null,false)}</div>
-        <div class="tip sp">Careful! Answer in a general way. Try to sound like you know the place.</div>
+        <div class="tip sp">Listen to each answer. Which places does it fit? Cross out places that don’t fit. Then give a general answer that sounds like the others.</div>
         ${stemsHtml(['I think you have to ___ .',"I'm not sure, but you can ___ .",'It depends.'],'sp')}`;
     }else{
       h+=`<div class="step">Secret briefing</div><h2>Your secret place</h2>
@@ -760,8 +752,8 @@ function renderStage(){
 
   else if(ph==='turns'){
     const n=S.order.length, asker=S.order[S.turn%n], to=S.order[(S.turn+1)%n];
-    const key=S.round+':'+S.turn; if(L.tkey!==key){ L.tkey=key; L.topic=null; L.form=null; L.guessOpen=false; }
-    h+=ringHtml()+dotsHtml();
+    const key=S.round+':'+S.turn; if(L.tkey!==key){ L.tkey=key; L.topic=null; L.form=null; }
+    h+=ringHtml()+dotsHtml()+refHtml();
     const iAsk=asker===L.pid, iAns=to===L.pid;
     if(S.sub==='ask'){
       if(iAsk){
@@ -781,61 +773,56 @@ function renderStage(){
             <div class="wt" style="text-align:left">Try both kinds this round!</div>`;
       }else{
         h+=`<div class="step">Listen</div><h2>${esc(nameOf(asker))} is choosing a question…</h2>
-            <p class="lead">${iAns?`Get ready to answer, ${esc(nameOf(L.pid))}! Don’t say the place name.`:'Listen carefully. Does everybody sound like they know the place?'}</p>`;
+            <p class="lead">${iAns?'Get ready to answer! Listen carefully. You will not see the question on your phone.':'Listen carefully. Does everybody sound like they know the place?'}</p>`;
       }
     }else{
       const q=S.q;
-      h+=`<div class="bubble"><small>${esc(nameOf(q.by))} asks ${esc(nameOf(q.to))}</small>${esc(q.text)}</div>`;
       if(iAns){
-        h+=`<div class="step" style="margin-top:14px">Your turn · answer</div><h2>Say your answer</h2>${stemsHtml(ANS[q.form])}
+        h+=`<div class="step" style="margin-top:14px">Your turn · answer</div><div style="font-size:54px;text-align:center;margin-top:4px">👂</div><h2 style="text-align:center">Listen carefully!</h2>
+            <p class="lead" style="text-align:center">${esc(nameOf(q.by))} is asking you a question. Your phone does not show it. Listen, then answer.</p>
+            ${minis(['Sorry?','Could you say that again?','Pardon?'])}
+            <div class="box"><h3>Yes / No questions</h3>${stemsHtml(ANS_YN)}<h3 style="margin-top:12px">Wh- questions</h3>${stemsHtml(ANS_WH)}</div>
             <div class="tip">${isSpy()?'You are the spy! Give a general answer that fits many places.':'Answer clearly, but don’t give the place away.'} Then tap the button.</div>
             <button class="btn" type="button" data-a="done">I answered</button>`;
       }else{
-        h+=`<div class="step" style="margin-top:14px">Listen</div><h2>${esc(nameOf(q.to))} is answering…</h2>
+        h+=`<div class="bubble"><small>${esc(nameOf(q.by))} asks ${esc(nameOf(q.to))}</small>${esc(q.text)}</div>
+            <div class="step" style="margin-top:14px">Listen</div><h2>${esc(nameOf(q.to))} is answering…</h2>
             <p class="lead">Listen. Then think: “Does ${esc(nameOf(q.to))} know the place?”</p>
             ${minis(['Really?','That’s interesting.','Me too.','I agree.','Hmm, are you sure?'])}`;
-        if(iAsk) h+=`<div class="tip">After ${esc(nameOf(q.to))} answers, ${esc(nameOf(q.to))} will tap “I answered”.</div>`;
       }
     }
-    h+=logHtml()+spyBtn();
   }
 
   else if(ph==='vote'){
-    h+=`<div class="step">Time to vote</div><h2>Who is the spy?</h2>
-        <p class="lead">Talk! Then choose a player and lock in your vote.</p>
-        ${stemsHtml(['I think ___ is the spy because ___ .','___ didn’t sound sure.','Maybe, but I think ___ .'])}
-        ${logHtml(true)}`;
-    const voted=!!(m&&m.vote);
-    h+=`<div class="vg">`+players().filter(p=>p.id!==L.pid&&S.order.includes(p.id)).map(p=>{
-      const sel=voted?m.vote===p.id:L.votePick===p.id;
-      return `<button type="button" class="vb ${sel?'sel':''}" data-a="vpick" data-v="${p.id}" ${voted?'disabled':''}><i>${esc(p.avatar)}</i>${esc(p.name)}</button>`;}).join('')+`</div>`;
-    if(!voted) h+=`<button class="btn pink" type="button" data-a="lock" ${L.votePick?'':'disabled'}>🗳️ Lock in my vote</button>`;
-    else h+=waitingOn('vote')+`<button class="btn ghost sm" type="button" data-a="unvote">Change my vote</button>`;
-    h+=spyBtn();
-  }
-
-  else if(ph==='catch'){
-    h+=`<div class="step">Caught!</div><h2>The spy was found!</h2>`;
+    h+=refHtml();
     if(isSpy()){
-      h+=`<div class="tip sp">They caught you! You have one last chance. Which place is it?</div>${cardsHtml(S.cand,L.guessPick,true)}
-          <button class="btn pink" type="button" data-a="cconfirm" ${L.guessPick?'':'disabled'}>Final guess</button>`;
+      h+=`<div class="step" style="margin-top:14px;color:var(--pink)">Stay calm…</div><h2>Your friends are voting</h2>
+        <div class="spycard"><div class="big">😎</div><div class="t">ACT NATURAL</div><p>If all of them choose you, you lose! Talk to your friends and sound sure.</p></div>
+        ${stemsHtml(['I think it’s ___ because ___ .','Why do you think so?','I agree with you.','Maybe, but I’m not sure.'],'sp')}`;
+      h+=voteCount();
     }else{
-      h+=`<div class="spycard"><div class="big">🔦</div><div class="t">SPY CAUGHT</div><p>${esc(nameOf(S.spy))} is guessing the place. Hold your breath…</p></div>`;
+      h+=`<div class="step" style="margin-top:14px">Time to vote</div><h2>Who is the spy?</h2>
+        <p class="lead">Talk! You must all choose the same person to catch the spy.</p>
+        ${stemsHtml(['I think ___ is the spy because ___ .','___ didn’t sound sure.','Maybe, but I think ___ .'])}`;
+      const voted=!!(m&&m.vote);
+      h+=`<div class="vg">`+players().filter(p=>p.id!==L.pid&&S.order.includes(p.id)).map(p=>{
+        const sel=voted?m.vote===p.id:L.votePick===p.id;
+        return `<button type="button" class="vb ${sel?'sel':''}" data-a="vpick" data-v="${p.id}" ${voted?'disabled':''}><i>${esc(p.avatar)}</i>${esc(p.name)}</button>`;}).join('')+`</div>`;
+      if(!voted) h+=`<button class="btn pink" type="button" data-a="lock" ${L.votePick?'':'disabled'}>🗳️ Lock in my vote</button>`;
+      else h+=voteCount()+`<button class="btn ghost sm" type="button" data-a="unvote">Change my vote</button>`;
     }
   }
 
   else if(ph==='reveal'){
-    const r=S.result||{}, how=r.how;
-    const head={ 'early-right':'The spy guessed the place!', 'early-wrong':'The spy guessed wrong!', 'caught-right':'Caught… but the spy guessed it!', 'caught-wrong':'The spy was caught!', 'uncaught':'The spy got away!' }[how]||'';
+    const r=S.result||{}, caught=r.how==='caught';
     h+=`<div style="text-align:center;margin:6px 0 2px"><span class="stamp ${r.spyWin?'s':'g'}">${r.spyWin?'SPY WINS':'GROUP WINS'}</span></div>
-        <h2 style="text-align:center;font-size:19px">${esc(head)}</h2>
+        <h2 style="text-align:center;font-size:19px">${caught?'Everyone chose the spy!':'The spy got away!'}</h2>
+        <p class="lead" style="text-align:center">${caught?'The agents all voted for the same person, and it was right.':'The agents did not all choose the spy.'}</p>
         ${polaroid(S.place,'The secret place')}
-        <div class="box" style="text-align:center"><h3>The spy was</h3><div style="font-size:44px">${esc(avOf(S.spy))}</div><div class="bng" style="font-size:20px;color:var(--pink)">${esc(nameOf(S.spy))}</div></div>`;
-    if(S.tally&&how!=='early-right'&&how!=='early-wrong'){
-      h+=`<div class="box"><h3>Votes</h3><div class="tally">`+S.order.map(id=>{ const v=(pById(id)||{}).vote; return v?`<span class="${v===S.spy?'hit':''}">${esc(avOf(id))} ➜ ${esc(avOf(v))} ${esc(nameOf(v))}</span>`:''; }).join('')+`</div></div>`;
-    }
-    h+=`<div class="box"><h3>Points</h3>`+players().filter(p=>S.order.includes(p.id)).sort((a,b)=>(b.score||0)-(a.score||0)).map(p=>`<div class="score"><span class="e">${esc(p.avatar)}</span>${esc(p.name)}${p.id===S.spy?' 🕵️':''}<span class="dl ${p.delta?'':'z'}">${p.delta?'+'+p.delta:'+0'}</span><span class="pt">${p.score||0}</span></div>`).join('')+`</div>`;
-    const last=S.round>=(S.rounds||5);
+        <div class="box" style="text-align:center"><h3>The spy was</h3><div style="font-size:44px">${esc(avOf(S.spy))}</div><div class="bng" style="font-size:20px;color:var(--pink)">${esc(nameOf(S.spy))}</div></div>
+        <div class="box"><h3>Votes</h3><div class="tally">`+S.order.filter(id=>id!==S.spy).map(id=>{ const v=(pById(id)||{}).vote; return v?`<span class="${v===S.spy?'hit':''}">${esc(avOf(id))} ➜ ${esc(avOf(v))} ${esc(nameOf(v))}</span>`:''; }).join('')+`</div></div>
+        <div class="box"><h3>Points</h3>`+players().filter(p=>S.order.includes(p.id)).sort((a,b)=>(b.score||0)-(a.score||0)).map(p=>`<div class="score"><span class="e">${esc(p.avatar)}</span>${esc(p.name)}${p.id===S.spy?' 🕵️':''}<span class="dl ${p.delta?'':'z'}">${p.delta?'+'+p.delta:'+0'}</span><span class="pt">${p.score||0}</span></div>`).join('')+`</div>`;
+    const last=S.round>=ROUNDS;
     h+= m&&m.ready?waitingOn('ready'):`<button class="btn" type="button" data-a="ready">${last?'See final scores':'Next round'}</button>`;
   }
 
@@ -851,22 +838,6 @@ function renderStage(){
   }
   P.innerHTML=h;
   P.style.animation='none'; void P.offsetWidth; P.style.animation='';
-}
-function logHtml(open){
-  const l=S.log||[]; if(!l.length) return '';
-  return `<details class="log" ${open?'open':''}><summary>Questions so far (${l.length})</summary><ol>`+l.map(x=>`<li>${esc(x)}</li>`).join('')+`</ol></details>`;
-}
-
-/* ---------- spy guess overlay ---------- */
-function renderOverlay(){
-  const w=$('ovWrap');
-  if(L.guessOpen&&isSpy()&&(S.phase==='turns'||S.phase==='vote')){
-    w.innerHTML=`<div class="ov"><div class="ovi"><div class="step" style="color:var(--pink)">Spy guess</div><h2>Which place is it?</h2>
-      <div class="tip sp">If you are right, you win the round! If you are wrong, you lose it. Be careful!</div>
-      ${cardsHtml(S.cand,L.guessPick,true)}
-      <button class="btn pink" type="button" data-a="gconfirm" ${L.guessPick?'':'disabled'}>This is the place!</button>
-      <button class="btn ghost sm" type="button" data-a="gclose">Not yet — go back</button></div></div>`;
-  }else w.innerHTML='';
 }
 
 /* ---------- celebratory effects ---------- */
@@ -898,11 +869,7 @@ document.addEventListener('click',e=>{
     case 'vpick': L.votePick=v; render(); break;
     case 'lock': if(L.votePick) setFlag('vote',L.votePick); break;
     case 'unvote': L.ref.child('players/'+L.pid+'/vote').remove(); break;
-    case 'gopen': L.guessOpen=true; L.guessPick=null; render(); break;
-    case 'gclose': L.guessOpen=false; render(); break;
-    case 'gpick': L.guessPick=v; render(); break;
-    case 'gconfirm': if(L.guessPick){ const g=L.guessPick; L.guessOpen=false; L.guessPick=null; act({t:'guess',place:g}); } break;
-    case 'cconfirm': if(L.guessPick){ const g=L.guessPick; L.guessPick=null; act({t:'cguess',place:g}); } break;
+    case 'cross': L.cross=L.cross||{}; L.cross[v]=!L.cross[v]; render(); break;
     case 'again': act({t:'start'}); break;
   }
 });
